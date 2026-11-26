@@ -23,6 +23,8 @@ public interface IFdoOwnerEnrollmentHandler
     /// Authorizes the authenticated Device and returns the issued DER
     /// certificate. Reject the request by throwing an exception.
     /// </summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<ReadOnlyMemory<byte>> AuthorizeAndIssueAsync(
         FdoEnrollmentRequest request,
         CancellationToken cancellationToken);
@@ -31,6 +33,8 @@ public interface IFdoOwnerEnrollmentHandler
     /// Durably commits the issued enrollment before DoneAck20 is produced,
     /// including enrollments issued by the server-key handler.
     /// </summary>
+    /// <param name="enrollment">The enrollment data to commit, validate, or install.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask CommitAsync(FdoEnrollmentCommit enrollment, CancellationToken cancellationToken);
 }
 

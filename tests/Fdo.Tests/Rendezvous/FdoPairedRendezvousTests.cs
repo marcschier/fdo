@@ -185,7 +185,7 @@ public sealed class FdoPairedRendezvousTests
         var fixture = new RendezvousFixture(authentication);
         using FdoRendezvousServerSession server = fixture.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
         using var binding = FdoHttpServerSession.ForRendezvous(server, 4);
-        using var body = new MemoryStream(new byte[10], writable: false);
+        await using var body = new MemoryStream(new byte[10], writable: false);
         var request = new FdoHttpServerRequest
         {
             Method = "POST",
@@ -213,7 +213,7 @@ public sealed class FdoPairedRendezvousTests
         ReadOnlyMemory<byte> encoded = fixture.Codec.EncodeInitial(20);
         using var binding = FdoHttpServerSession.ForRendezvous(
             fixture.CreateServer(FdoRendezvousProtocol.OwnerRegistration), encoded.Length);
-        using var body = new MemoryStream(encoded.ToArray(), writable: false);
+        await using var body = new MemoryStream(encoded.ToArray(), writable: false);
 
         FdoHttpServerResponse response = await binding.ProcessAsync(new FdoHttpServerRequest
         {
@@ -327,7 +327,7 @@ public sealed class FdoPairedRendezvousTests
         FdoTransportException duplicate = await CatchAsync<FdoTransportException>(async () =>
             await binding.ProcessAsync(HttpRequest(
                 "/fdo/200/msg/20", body, contentTypes: ["application/cbor", "application/cbor"])));
-        using var shortBody = new MemoryStream(body.ToArray(), writable: false);
+        await using var shortBody = new MemoryStream(body.ToArray(), writable: false);
         var truncated = new FdoHttpServerRequest
         {
             Method = "POST",

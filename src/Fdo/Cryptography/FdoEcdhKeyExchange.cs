@@ -48,6 +48,14 @@ internal sealed class FdoEcdhKeyExchange : IFdoPairedKeyExchange
     }
 
     /// <summary>Generates a new ephemeral key and a fresh exchange random.</summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="party">The participant whose contribution is being processed.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The suite is not ECDH256 or ECDH384, or the party is not Device or Owner.
+    /// </exception>
+    /// <exception cref="CryptographicException">
+    /// The ECDH provider returns public coordinates with an unexpected length.
+    /// </exception>
     public static FdoEcdhKeyExchange Create(FdoKeyExchangeSuite suite, FdoEcdhParty party)
     {
         if (party is not (FdoEcdhParty.Device or FdoEcdhParty.Owner))
@@ -105,6 +113,11 @@ internal sealed class FdoEcdhKeyExchange : IFdoPairedKeyExchange
     /// OwnerRandom. The caller must clear the result and must not use it as
     /// key material without the FDO KDF. A failed attempt also consumes the key.
     /// </summary>
+    /// <param name="peerParameter">The peer's contribution to the negotiated key exchange.</param>
+    /// <exception cref="CryptographicException">
+    /// The ECDH provider returned a shared secret of an unexpected length. The peer ECDH parameter has an invalid
+    /// length. The peer ECDH public key matches the local ephemeral key.
+    /// </exception>
     public byte[] DeriveSharedSecret(ReadOnlySpan<byte> peerParameter)
     {
         lock (_sync)

@@ -18,6 +18,11 @@ internal static class FdoKeyDerivation
     /// Derives key material from the shared secret and exchange context.
     /// The caller owns and must clear the resulting key material.
     /// </summary>
+    /// <param name="sharedSecret">The secret produced by the key exchange.</param>
+    /// <param name="contextRand">The random bytes included in the key derivation context.</param>
+    /// <param name="hashAlgorithm">The hash algorithm required by the suite.</param>
+    /// <param name="destination">The buffer that receives the result.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The output length must fit in a 16-bit bit count.</exception>
     public static void Derive(
         ReadOnlySpan<byte> sharedSecret,
         ReadOnlySpan<byte> contextRand,
@@ -44,6 +49,16 @@ internal static class FdoKeyDerivation
     /// Derives the verification and encryption keys for an encrypt-then-MAC
     /// suite. The caller selects their lengths and must clear both outputs.
     /// </summary>
+    /// <param name="sharedSecret">The secret produced by the key exchange.</param>
+    /// <param name="contextRand">The random bytes included in the key derivation context.</param>
+    /// <param name="hashAlgorithm">The hash algorithm required by the suite.</param>
+    /// <param name="verificationKey">The key used to verify the signature or MAC.</param>
+    /// <param name="encryptionKey">The key used to encrypt or decrypt the message.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The combined key length must fit in a 16-bit bit count. The encryption key must not be empty. The verification
+    /// key must not be empty.
+    /// </exception>
+    /// <exception cref="ArgumentException">The output keys must not overlap each other or the inputs.</exception>
     public static void DeriveEncryptThenMac(
         ReadOnlySpan<byte> sharedSecret,
         ReadOnlySpan<byte> contextRand,
@@ -89,6 +104,20 @@ internal static class FdoKeyDerivation
     /// <summary>
     /// Applies an eight-bit counter before the supplied fixed input fragments.
     /// </summary>
+    /// <param name="sharedSecret">The secret produced by the key exchange.</param>
+    /// <param name="fixedInputPrefix">The fixed input bytes before the key derivation context.</param>
+    /// <param name="fixedInputContext">The context portion of the fixed key derivation input.</param>
+    /// <param name="fixedInputSuffix">The fixed input bytes after the key derivation context.</param>
+    /// <param name="hashAlgorithm">The hash algorithm required by the suite.</param>
+    /// <param name="destination">The buffer that receives the result.</param>
+    /// <exception cref="ArgumentException">
+    /// Only HMAC-SHA-256 and HMAC-SHA-384 are supported. The destination must not overlap the secret or fixed input.
+    /// The shared secret must not be empty.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The output length exceeds the FDO counter or bit-length limit.
+    /// </exception>
+    /// <exception cref="CryptographicException">The HMAC returned an unexpected output length.</exception>
     internal static void DeriveCounterMode(
         ReadOnlySpan<byte> sharedSecret,
         ReadOnlySpan<byte> fixedInputPrefix,

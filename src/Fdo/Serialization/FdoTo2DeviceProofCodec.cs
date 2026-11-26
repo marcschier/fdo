@@ -42,6 +42,13 @@ internal sealed class FdoTo2DeviceProofCodec
     /// caller supplies a fresh Owner-proof nonce and a one-use Device exchange
     /// parameter, and must retain the matching private exchange key.
     /// </summary>
+    /// <param name="sentProbe">The exact probe bytes sent to the peer.</param>
+    /// <param name="receivedAcknowledgement">The exact acknowledgement bytes received from the peer.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="cipher">The cipher suite selected for protected messages.</param>
+    /// <param name="deviceParameter">The Device's contribution to the negotiated key exchange.</param>
+    /// <param name="ownerNonce">The nonce supplied by the Owner for this exchange.</param>
+    /// <param name="devicePrivateKey">The private key used by the Device in this key exchange.</param>
     public ReadOnlyMemory<byte> Sign(
         ReadOnlyMemory<byte> sentProbe,
         ReadOnlyMemory<byte> receivedAcknowledgement,
@@ -89,6 +96,17 @@ internal sealed class FdoTo2DeviceProofCodec
     /// transcript hashes. The caller must establish the supplied key's
     /// certificate and supply-chain trust and bind it to this same run.
     /// </summary>
+    /// <param name="receivedProbe">The exact probe bytes received from the peer.</param>
+    /// <param name="sentAcknowledgement">The exact acknowledgement bytes sent to the peer.</param>
+    /// <param name="encodedProof">The exact encoded proof to read or verify.</param>
+    /// <param name="devicePublicKey">The Device public key used in the verification.</param>
+    /// <exception cref="CborContentException">
+    /// The Device EAT is missing a required claim. The paired Device EAT requires exactly three claims.
+    /// </exception>
+    /// <exception cref="NotSupportedException">Additional Device EAT claims are not supported.</exception>
+    /// <exception cref="CryptographicException">
+    /// The Device EAT nonce or GUID does not match the TO2 transcript.
+    /// </exception>
     public DeviceProof Verify(
         ReadOnlyMemory<byte> receivedProbe,
         ReadOnlyMemory<byte> sentAcknowledgement,
@@ -230,6 +248,11 @@ internal sealed class FdoTo2DeviceProofCodec
     /// Signed transcript fields; Device identity and certificate trust remain
     /// the caller's responsibility.
     /// </summary>
+    /// <param name="Guid">The 16-byte Device GUID in wire order.</param>
+    /// <param name="Exchange">The selected key exchange suite.</param>
+    /// <param name="Cipher">The cipher suite selected for protected messages.</param>
+    /// <param name="DeviceParameter">The Device's contribution to the negotiated key exchange.</param>
+    /// <param name="OwnerNonce">The nonce supplied by the Owner for this exchange.</param>
     public sealed record DeviceProof(
         ReadOnlyMemory<byte> Guid,
         FdoKeyExchangeSuite Exchange,

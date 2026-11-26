@@ -10,7 +10,7 @@ namespace Fdo.Serialization;
 /// Encodes and decodes the plaintext TO2 completion bodies. The caller must
 /// authenticate and decrypt received messages and check their protocol state.
 /// </summary>
-internal sealed class FdoTo2CompletionCodec
+internal static class FdoTo2CompletionCodec
 {
     private const int NonceLength = 16;
     private const int MaxEncodedBytes = 70;
@@ -21,7 +21,9 @@ internal sealed class FdoTo2CompletionCodec
     /// A parsed value does not authenticate the message or establish a
     /// credential disposition.
     /// </summary>
-    public Done20 DecodeDone(ReadOnlyMemory<byte> encoded)
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">ReplacementHMac must use an HMAC algorithm.</exception>
+    public static Done20 DecodeDone(ReadOnlyMemory<byte> encoded)
     {
         var reader = new CborReader(Cbor.ValidateAndCopy(encoded), CborConformanceMode.Canonical);
         RequireArray(reader, 2);
@@ -50,7 +52,10 @@ internal sealed class FdoTo2CompletionCodec
     /// Writes the user-selected Done20 form. The role must ensure null is
     /// used for credential reuse and the replacement HMAC for replacement.
     /// </summary>
-    public ReadOnlyMemory<byte> EncodeDone(ReadOnlyMemory<byte> nonce, FdoHashValue? replacementHmac)
+    /// <param name="nonce">The nonce for this exchange.</param>
+    /// <param name="replacementHmac">The replacement voucher header HMAC, if the credential changes.</param>
+    /// <exception cref="ArgumentException">ReplacementHMac must use an HMAC algorithm.</exception>
+    public static ReadOnlyMemory<byte> EncodeDone(ReadOnlyMemory<byte> nonce, FdoHashValue? replacementHmac)
     {
         RequireNonce(nonce);
         if (replacementHmac?.IsHmac == false)
@@ -75,7 +80,8 @@ internal sealed class FdoTo2CompletionCodec
     }
 
     /// <summary>Reads the nonce from the plaintext DoneAck20 body.</summary>
-    public ReadOnlyMemory<byte> DecodeDoneAck(ReadOnlyMemory<byte> encoded)
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    public static ReadOnlyMemory<byte> DecodeDoneAck(ReadOnlyMemory<byte> encoded)
     {
         var reader = new CborReader(Cbor.ValidateAndCopy(encoded), CborConformanceMode.Canonical);
         RequireArray(reader, 1);
@@ -85,7 +91,8 @@ internal sealed class FdoTo2CompletionCodec
     }
 
     /// <summary>Writes the nonce in the plaintext DoneAck20 body.</summary>
-    public ReadOnlyMemory<byte> EncodeDoneAck(ReadOnlyMemory<byte> nonce)
+    /// <param name="nonce">The nonce for this exchange.</param>
+    public static ReadOnlyMemory<byte> EncodeDoneAck(ReadOnlyMemory<byte> nonce)
     {
         RequireNonce(nonce);
         var writer = new CborWriter(CborConformanceMode.Canonical);
@@ -128,5 +135,7 @@ internal sealed class FdoTo2CompletionCodec
     }
 
     /// <summary>The unverified Done20 fields, with nonce bytes owned by this value.</summary>
+    /// <param name="Nonce">The nonce for this exchange.</param>
+    /// <param name="ReplacementHmac">The replacement voucher header HMAC, if the credential changes.</param>
     public sealed record Done20(ReadOnlyMemory<byte> Nonce, FdoHashValue? ReplacementHmac);
 }

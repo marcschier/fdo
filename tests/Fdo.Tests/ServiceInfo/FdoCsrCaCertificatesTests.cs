@@ -172,11 +172,13 @@ public sealed class FdoCsrCaCertificatesTests
         byte[] malformedCertificate = [0x30, 0x00];
         byte[] malformedCrl = [0x30, 0x00];
 
-        await Assert.That(Throws<ArgumentException>(() => new FdoCaCertificates([]))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => new FdoCaCertificates([new byte[ushort.MaxValue + 1]]))).IsTrue();
-        await Assert.That(Throws<CryptographicException>(() => new FdoCaCertificates([malformedCertificate]))).IsTrue();
-        await Assert.That(Throws<CryptographicException>(() => new FdoCaCertificates([], [malformedCrl]))).IsTrue();
-        await Assert.That(Throws<CryptographicException>(() => new FdoCaCertificates([], [trailingCrl]))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() => _ = new FdoCaCertificates([]))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoCaCertificates([new byte[ushort.MaxValue + 1]]))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() =>
+            _ = new FdoCaCertificates([malformedCertificate]))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() => _ = new FdoCaCertificates([], [malformedCrl]))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() => _ = new FdoCaCertificates([], [trailingCrl]))).IsTrue();
         await Assert.That(Throws<CryptographicException>(() =>
             FdoCsrCaCertificatesCodec.Decode(new byte[ushort.MaxValue + 1]))).IsTrue();
     }

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Formats.Cbor;
 using System.Net;
 using System.Runtime.Versioning;
@@ -149,7 +150,7 @@ public static class FdoRendezvousInfo
         FdoRendezvousProtocol protocol) =>
         new(protocol, ParseCore(encodedRendezvousInfo, protocol, allowDelay: true));
 
-    private static IReadOnlyList<FdoRendezvousDirective> ParseCore(
+    private static ReadOnlyCollection<FdoRendezvousDirective> ParseCore(
         ReadOnlyMemory<byte> encodedRendezvousInfo,
         FdoRendezvousProtocol protocol,
         bool allowDelay)

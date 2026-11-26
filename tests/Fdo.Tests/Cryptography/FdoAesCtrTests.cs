@@ -13,9 +13,9 @@ public sealed class FdoAesCtrTests
     /// <summary>
     /// NIST SP 800-38A, F.5.1 and F.5.5.
     /// </summary>
-    /// <param name="keyHex"></param>
-    /// <param name="ciphertextHex"></param>
-    /// <returns></returns>
+    /// <param name="keyHex">The NIST AES key in hexadecimal.</param>
+    /// <param name="ciphertextHex">The expected ciphertext in hexadecimal.</param>
+    /// <returns>A task that completes after the vector assertions.</returns>
     [Test]
     [Arguments(
         "2B7E151628AED2A6ABF7158809CF4F3C",
@@ -116,7 +116,7 @@ public sealed class FdoAesCtrTests
         await Assert.That(third).IsEqualTo(3u);
         await Assert.That(next).IsEqualTo(4UL);
 
-        ulong last = FdoAesCtr.CounterSpace - 2;
+        const ulong last = FdoAesCtr.CounterSpace - 2;
         await Assert.That(FdoAesCtr.TryReserve(last, 32, out uint final, out ulong end)).IsTrue();
         await Assert.That(final).IsEqualTo(uint.MaxValue - 1);
         await Assert.That(end).IsEqualTo(FdoAesCtr.CounterSpace);

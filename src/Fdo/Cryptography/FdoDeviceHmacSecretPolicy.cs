@@ -23,6 +23,7 @@ internal static class FdoDeviceHmacSecretPolicy
     /// Generates a software-held secret. The caller must persist it in
     /// protected storage and clear the returned buffer when it is no longer needed.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
     public static byte[] Generate(FdoHashAlgorithm algorithm) =>
         RandomNumberGenerator.GetBytes(GetRequiredLength(algorithm));
 

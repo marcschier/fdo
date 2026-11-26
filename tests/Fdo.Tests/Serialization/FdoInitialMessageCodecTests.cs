@@ -79,7 +79,7 @@ public sealed class FdoInitialMessageCodecTests
         await Assert.That(decoded.AdvertisedCapabilities)
             .IsEqualTo(FdoKnownCapabilities.Fdo10 | FdoKnownCapabilities.Fdo20 | FdoKnownCapabilities.Delegation);
         await Assert.That(decoded.VendorCapabilities.SequenceEqual(
-            new[] { "com.example.first", "org.example.second" })).IsTrue();
+            ["com.example.first", "org.example.second"])).IsTrue();
         await Assert.That(Convert.ToHexString(decoded.GuidOrNonce!.Value.Span))
             .IsEqualTo(Convert.ToHexString(Identifier));
         InitialMessage again = codec.Decode(FdoMessageTypes.TO1HelloRV, codec.Encode(decoded));
@@ -144,7 +144,7 @@ public sealed class FdoInitialMessageCodecTests
     {
         var byteLimited = new FdoInitialMessageCodec(maxEncodedBytes: 4);
         var emptyVendors = new InitialMessage(FdoMessageTypes.TO0Hello, new byte[] { 0x04 }, Array.Empty<string>(), null);
-        var oneVendor = new InitialMessage(FdoMessageTypes.TO0Hello, new byte[] { 0x04 }, new[] { "com.example.a" }, null);
+        var oneVendor = new InitialMessage(FdoMessageTypes.TO0Hello, new byte[] { 0x04 }, ["com.example.a"], null);
         var itemLimited = new FdoInitialMessageCodec(maxItems: 3);
         var depthLimited = new FdoInitialMessageCodec(maxDepth: 2);
 
@@ -162,7 +162,7 @@ public sealed class FdoInitialMessageCodecTests
     public async Task ByteLimitCountsUtf8BytesRatherThanCharacters()
     {
         var message = new InitialMessage(
-            FdoMessageTypes.TO0Hello, new byte[] { 0x04 }, new[] { "com.example.\u00e9" }, null);
+            FdoMessageTypes.TO0Hello, new byte[] { 0x04 }, ["com.example.\u00e9"], null);
 
         await Assert.That(new FdoInitialMessageCodec(maxEncodedBytes: 19).Encode(message).Length).IsEqualTo(19);
         await Assert.That(Throws<CborContentException>(

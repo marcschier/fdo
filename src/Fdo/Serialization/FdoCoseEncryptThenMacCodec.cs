@@ -40,6 +40,13 @@ internal sealed class FdoCoseEncryptThenMacCodec
     /// Encrypts one encoded FDO CBOR value with the caller's reserved IV or
     /// counter block, then authenticates the encoded inner envelope.
     /// </summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="verificationKey">The key used to verify the signature or MAC.</param>
+    /// <param name="encryptionKey">The key used to encrypt or decrypt the message.</param>
+    /// <param name="counterBlock">The counter block at the start of the operation.</param>
+    /// <param name="encodedPlaintext">The exact CBOR payload before channel protection.</param>
+    /// <exception cref="ArgumentException">The AES IV must contain 16 bytes.</exception>
+    /// <exception cref="CborContentException">The encrypt-then-MAC envelope exceeds the encoded byte limit.</exception>
     public ReadOnlyMemory<byte> Encrypt(
         FdoCoseAeadAlgorithm suite,
         ReadOnlySpan<byte> verificationKey,
@@ -111,6 +118,8 @@ internal sealed class FdoCoseEncryptThenMacCodec
     /// Returns the exact canonical envelope length that <see cref="Encrypt"/>
     /// produces for a plaintext of the given length.
     /// </summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="plaintextLength">The plaintext length in bytes.</param>
     public static long GetEncodedLength(FdoCoseAeadAlgorithm suite, int plaintextLength)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(plaintextLength);
@@ -131,6 +140,19 @@ internal sealed class FdoCoseEncryptThenMacCodec
     /// enforce the selected channel's IV and counter rules before calling
     /// <see cref="Decrypt"/>.
     /// </summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="verificationKey">The key used to verify the signature or MAC.</param>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="ArgumentException">The verification key length does not match the suite.</exception>
+    /// <exception cref="CborContentException">
+    /// An FDO COSE_Mac0 must contain four fields. An FDO encrypt-then-MAC message requires COSE_Mac0 tag 17. The AES IV
+    /// must contain 16 bytes. The COSE_Mac0 message contains trailing data. The COSE_Mac0 protected header must contain
+    /// only the selected MAC algorithm. The COSE_Mac0 unprotected header must be empty. The encrypt-then-MAC payload
+    /// contains trailing data. The encrypt-then-MAC payload requires COSE_Encrypt0 tag 16. The inner COSE_Encrypt0 must
+    /// contain three fields. The inner protected header must contain only the selected cipher suite. The inner
+    /// unprotected header must contain only the IV.
+    /// </exception>
+    /// <exception cref="CryptographicException">The encrypt-then-MAC authentication tag is not valid.</exception>
     public AuthenticatedMessage VerifyAndParse(
         FdoCoseAeadAlgorithm suite,
         ReadOnlySpan<byte> verificationKey,
@@ -230,6 +252,10 @@ internal sealed class FdoCoseEncryptThenMacCodec
     /// Decrypts an authenticated message and validates the plaintext as one
     /// FDO CBOR value. The caller must clear the returned buffer after use.
     /// </summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="encryptionKey">The key used to encrypt or decrypt the message.</param>
+    /// <param name="message">The message to encode, send, or validate.</param>
+    /// <exception cref="ArgumentException">The encryption key length does not match the suite.</exception>
     public byte[] Decrypt(
         FdoCoseAeadAlgorithm suite,
         ReadOnlySpan<byte> encryptionKey,
@@ -334,5 +360,7 @@ internal sealed class FdoCoseEncryptThenMacCodec
     }
 
     /// <summary>An authenticated but still encrypted message.</summary>
+    /// <param name="CounterBlock">The counter block at the start of the operation.</param>
+    /// <param name="Ciphertext">The buffer containing or receiving the encrypted payload.</param>
     public sealed record AuthenticatedMessage(byte[] CounterBlock, byte[] Ciphertext);
 }

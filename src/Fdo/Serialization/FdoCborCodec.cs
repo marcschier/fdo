@@ -26,6 +26,9 @@ internal sealed class FdoCborCodec
     /// Sets independent byte, nesting and item limits. Nesting includes tags
     /// and is capped at 128 to bound the validator's call stack.
     /// </summary>
+    /// <param name="maxEncodedBytes">The maximum size of the encoded value, in bytes.</param>
+    /// <param name="maxDepth">The maximum permitted CBOR nesting depth.</param>
+    /// <param name="maxItems">The maximum number of CBOR items to process.</param>
     public FdoCborCodec(int maxEncodedBytes = ushort.MaxValue, int maxDepth = 32, int maxItems = ushort.MaxValue)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxEncodedBytes);
@@ -45,6 +48,7 @@ internal sealed class FdoCborCodec
     /// checks. Byte-string payloads remain opaque; embedded signed CBOR is not
     /// rewritten.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public ReadOnlyMemory<byte> ValidateAndCopy(ReadOnlyMemory<byte> encoded) =>
         ValidateAndCopy(encoded, CborConformanceMode.Canonical);
 
@@ -52,6 +56,7 @@ internal sealed class FdoCborCodec
     /// Checks one definite-length embedded value without normalizing its
     /// encoded bytes. The enclosing FDO message is checked separately.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public ReadOnlyMemory<byte> ValidateEmbeddedValueAndCopy(ReadOnlyMemory<byte> encoded) =>
         ValidateAndCopy(encoded, CborConformanceMode.Strict);
 
@@ -59,6 +64,7 @@ internal sealed class FdoCborCodec
     /// Checks a value without copying it. The caller must exclusively own the
     /// buffer and prevent mutation for the duration of validation.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public void ValidateOwned(ReadOnlyMemory<byte> encoded) =>
         Validate(encoded, CborConformanceMode.Canonical);
 
@@ -86,6 +92,7 @@ internal sealed class FdoCborCodec
     /// Returns the exact contents of a definite byte string, excluding its CBOR
     /// wrapper. The payload is not decoded or re-encoded before hashing or signing.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public ReadOnlyMemory<byte> ReadByteStringPayload(ReadOnlyMemory<byte> encoded)
     {
         var reader = new CborReader(ValidateAndCopy(encoded), CborConformanceMode.Canonical);
@@ -97,6 +104,10 @@ internal sealed class FdoCborCodec
     /// Reconstructs the StreamMsg structure from HTTP metadata and a received
     /// body, without encoding an extra wire envelope.
     /// </summary>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="version">The protocol version associated with the encoded value.</param>
+    /// <param name="authorization">The exact HTTP Authorization header value for this session.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
     public StreamMessage CreateStreamMessage(
         ushort messageType,
         FdoProtocolVersion version,
@@ -111,6 +122,12 @@ internal sealed class FdoCborCodec
     }
 
     /// <summary>Reads one complete StreamMsg and preserves its encoded body.</summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// MsgProtocolInfo contains an unknown key. MsgProtocolInfo permits only an optional token entry. StreamMsg has an
+    /// invalid protocol version. StreamMsg length does not match the complete encoded frame. StreamMsg must contain
+    /// exactly five elements.
+    /// </exception>
     public StreamMessage DecodeStreamMessage(ReadOnlyMemory<byte> encoded)
     {
         ReadOnlyMemory<byte> copy = ValidateAndCopy(encoded);
@@ -166,6 +183,10 @@ internal sealed class FdoCborCodec
     /// overload represents an HTTP authorization value as text; it does not
     /// restrict the specification's undefined authtoken wire type.
     /// </summary>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="version">The protocol version associated with the encoded value.</param>
+    /// <param name="authorization">The exact HTTP Authorization header value for this session.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
     public ReadOnlyMemory<byte> EncodeStreamMessage(
         ushort messageType,
         FdoProtocolVersion version,
@@ -179,6 +200,11 @@ internal sealed class FdoCborCodec
     /// Encodes an opaque CBOR token without imposing a wire type on authtoken.
     /// A missing token differs from a token encoded as CBOR null.
     /// </summary>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="version">The protocol version associated with the encoded value.</param>
+    /// <param name="encodedToken">The encoded token presented for this exchange.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <exception cref="CborContentException">StreamMsg exceeds the encoded byte limit.</exception>
     public ReadOnlyMemory<byte> EncodeStreamMessageWithEncodedToken(
         ushort messageType,
         FdoProtocolVersion version,
@@ -484,6 +510,7 @@ internal sealed class FdoCborCodec
     }
 
     /// <summary>Returns the shortest CBOR initial-byte and argument length.</summary>
+    /// <param name="value">The unsigned CBOR argument to encode.</param>
     internal static int GetHeaderSize(ulong value) => value switch
     {
         <= 23 => 1,
@@ -517,6 +544,12 @@ internal sealed class FdoCborCodec
     }
 
     /// <summary>A StreamMsg whose body retains its received encoding.</summary>
+    /// <param name="Length">The length of the value in bytes.</param>
+    /// <param name="MessageType">The numeric type of the FDO message.</param>
+    /// <param name="Version">The protocol version associated with the encoded value.</param>
+    /// <param name="Authorization">The exact HTTP Authorization header value for this session.</param>
+    /// <param name="Body">The stream containing the framed HTTP request body.</param>
+    /// <param name="EncodedToken">The encoded token presented for this exchange.</param>
     public sealed record StreamMessage(
         int Length,
         ushort MessageType,

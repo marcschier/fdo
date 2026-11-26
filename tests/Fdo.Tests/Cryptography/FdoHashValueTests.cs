@@ -197,7 +197,7 @@ public sealed class FdoHashValueTests
         {
             byte[] incorrect = new byte[length];
             byte[] encoded = EncodeWithLength(encodedAlgorithm, length);
-            await Assert.That(Throws<ArgumentException>(() => new FdoHashValue(type, incorrect))).IsTrue();
+            await Assert.That(Throws<ArgumentException>(() => _ = new FdoHashValue(type, incorrect))).IsTrue();
             await Assert.That(Throws<CborContentException>(() => FdoHashValue.Decode(encoded))).IsTrue();
         }
     }
@@ -300,7 +300,7 @@ public sealed class FdoHashValueTests
         FdoHashValue hmac = FdoHashValue.ComputeHmac(FdoHashAlgorithm.HmacSha256, key, data);
 
         await Assert.That(Throws<ArgumentOutOfRangeException>(
-            () => new FdoHashValue((FdoHashAlgorithm)0, new byte[32]))).IsTrue();
+            () => _ = new FdoHashValue((FdoHashAlgorithm)0, new byte[32]))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(
             () => FdoHashValue.ComputeDigest(FdoHashAlgorithm.HmacSha256, data))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(
@@ -328,7 +328,7 @@ public sealed class FdoHashValueTests
         var hmac = new FdoHashValue(FdoHashAlgorithm.HmacSha256, new byte[32]);
 
         await Assert.That(Throws<ArgumentOutOfRangeException>(
-            () => new FdoHashValue(unknown, new byte[32]))).IsTrue();
+            () => _ = new FdoHashValue(unknown, new byte[32]))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(
             () => FdoHashValue.ComputeDigest(unknown, data))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(

@@ -284,7 +284,7 @@ public sealed class FdoTo2OwnerDeviceAuthenticatorTests
                 new long[] { (long)FdoHashAlgorithm.Sha256 }, new byte[16])).ToArray();
             Acknowledgement = initial.EncodeAcknowledgement(new FdoTo2InitialCodec.Acknowledgement(
                 new byte[] { 4 }, Array.Empty<string>(), Voucher.Guid, 4096,
-                new[] { "ECDH256", "ECDH384" },
+                ["ECDH256", "ECDH384"],
                 new long[] { 1, 3, 30, 31, 32, 33, -17760703, -17760704, -17760705, -17760706 },
                 Convert.FromHexString("202122232425262728292A2B2C2D2E2F"),
                 initial.ComputeProbeHash(FdoHashAlgorithm.Sha256, Probe))).ToArray();

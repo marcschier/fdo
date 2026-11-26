@@ -298,6 +298,9 @@ public sealed class FdoOwnerResponse
     /// Snapshots a response received by a Device transport. The host must
     /// enforce its receive limit while reading the body.
     /// </summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
     public FdoOwnerResponse(
         ushort protocolVersion,
         FdoTo2MessageType messageType,

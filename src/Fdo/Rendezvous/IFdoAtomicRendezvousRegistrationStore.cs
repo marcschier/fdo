@@ -21,6 +21,8 @@ namespace Fdo.Rendezvous;
 public interface IFdoAtomicRendezvousRegistrationStore
 {
     /// <summary>Reads one consistent snapshot with all live records for the Device.</summary>
+    /// <param name="deviceId">The Device identity associated with the operation.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// Use the adapter's trusted clock. A record is live only while the clock
     /// is strictly earlier than its expiry. Return the current revision even
@@ -31,6 +33,8 @@ public interface IFdoAtomicRendezvousRegistrationStore
         Guid deviceId, CancellationToken cancellationToken);
 
     /// <summary>Conditionally writes one record and its mutation receipt.</summary>
+    /// <param name="mutation">The proposed atomic change to the registration.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// <para>
     /// In one transaction check the receipt, expected revision, expiry,
@@ -56,6 +60,8 @@ public interface IFdoAtomicRendezvousRegistrationStore
         FdoRendezvousRegistrationMutation mutation, CancellationToken cancellationToken);
 
     /// <summary>Checks whether the exact mutation is known to have committed.</summary>
+    /// <param name="mutation">The proposed atomic change to the registration.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// A successful receipt remains queryable after replacement and expiry
     /// throughout the host's reconciliation window, which must cover all
@@ -173,6 +179,8 @@ public sealed class FdoRendezvousRegistrationMutation
 public sealed class FdoRendezvousRegistrationSnapshot
 {
     /// <summary>Snapshots one view returned by the host store.</summary>
+    /// <param name="revision">The revision of the registration to compare or update.</param>
+    /// <param name="records">The ordered registration snapshot.</param>
     public FdoRendezvousRegistrationSnapshot(Guid? revision, IReadOnlyList<FdoRendezvousRegistrationRecord> records)
     {
         ArgumentNullException.ThrowIfNull(records);

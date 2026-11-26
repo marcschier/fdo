@@ -24,7 +24,6 @@ internal sealed class FdoTo2ServiceInfoState
     private readonly object _sync = new();
     private readonly FdoTo2ServiceInfoCodec _deviceCodec;
     private readonly FdoTo2ServiceInfoCodec _ownerCodec;
-    private readonly FdoTo2CompletionCodec _completion = new();
     private readonly byte[] _doneNonce;
     private Turn _turn;
     private int _rounds;
@@ -52,6 +51,11 @@ internal sealed class FdoTo2ServiceInfoState
     /// before decoding, so the caller neither sends nor processes a message
     /// beyond it.
     /// </summary>
+    /// <param name="plaintext">The buffer containing or receiving the unprotected payload.</param>
+    /// <exception cref="CborContentException">
+    /// The Device must send an empty ServiceInfo message in this turn. The ServiceInfo exchange exceeds the round
+    /// limit.
+    /// </exception>
     public FdoTo2ServiceInfoCodec.DeviceServiceInfo RecordDevice(ReadOnlyMemory<byte> plaintext)
     {
         lock (_sync)
@@ -135,6 +139,13 @@ internal sealed class FdoTo2ServiceInfoState
     /// algorithm requires a null HMAC; otherwise the selected algorithm is
     /// required. This does not commit enrollment or establish DoneAck20 delivery.
     /// </summary>
+    /// <param name="plaintext">The buffer containing or receiving the unprotected payload.</param>
+    /// <param name="replacementAlgorithm">The algorithm negotiated for the replacement credential HMAC.</param>
+    /// <exception cref="InvalidOperationException">The Owner has not finished ServiceInfo.</exception>
+    /// <exception cref="CborContentException">
+    /// Credential replacement requires the selected HMAC algorithm. Credential reuse requires a null replacement HMAC.
+    /// </exception>
+    /// <exception cref="CryptographicException">The Done20 nonce does not match the Owner challenge.</exception>
     public FdoHashValue? RecordDone(
         ReadOnlyMemory<byte> plaintext, FdoHashAlgorithm? replacementAlgorithm = null)
     {
@@ -149,7 +160,7 @@ internal sealed class FdoTo2ServiceInfoState
                     throw new InvalidOperationException("The Owner has not finished ServiceInfo.");
                 }
 
-                FdoTo2CompletionCodec.Done20 done = _completion.DecodeDone(plaintext);
+                FdoTo2CompletionCodec.Done20 done = FdoTo2CompletionCodec.DecodeDone(plaintext);
                 if (replacementAlgorithm is null && done.ReplacementHmac is not null)
                 {
                     throw new CborContentException("Credential reuse requires a null replacement HMAC.");

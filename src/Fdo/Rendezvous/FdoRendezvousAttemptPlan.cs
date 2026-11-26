@@ -302,6 +302,7 @@ public sealed class FdoRendezvousAttemptPlan
     /// <param name="attempt">The attempt from the most recent attempt step.</param>
     /// <param name="result">The outcome. Uncertain requires a later <see cref="Reconcile"/>.</param>
     /// <exception cref="InvalidOperationException">The attempt is not the outstanding attempt.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The result is not a defined attempt outcome.</exception>
     public void Report(FdoRendezvousAttempt attempt, FdoRendezvousAttemptResult result)
     {
         ArgumentNullException.ThrowIfNull(attempt);
@@ -339,6 +340,9 @@ public sealed class FdoRendezvousAttemptPlan
     /// <summary>Resolves an uncertain attempt after the host has established its outcome.</summary>
     /// <param name="resolvedResult">Succeeded, Failed to continue with the next candidate, or Stop.</param>
     /// <exception cref="InvalidOperationException">No attempt is awaiting reconciliation.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The resolved result is not Succeeded, Failed, or Stop.
+    /// </exception>
     public void Reconcile(FdoRendezvousAttemptResult resolvedResult)
     {
         if (resolvedResult is not (FdoRendezvousAttemptResult.Succeeded or

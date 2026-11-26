@@ -15,6 +15,7 @@ using Entry = Fdo.Serialization.FdoServiceInfoCodec.Entry;
 namespace Fdo.ServiceInfo;
 
 /// <summary>Frames the selected paired server-key MIME response in one CBOR text value.</summary>
+/// <param name="maxPlaintextBytes">The maximum plaintext message size, in bytes.</param>
 [UnsupportedOSPlatform("browser")]
 internal sealed class FdoCsrServerKeygenCodec(int maxPlaintextBytes)
 {

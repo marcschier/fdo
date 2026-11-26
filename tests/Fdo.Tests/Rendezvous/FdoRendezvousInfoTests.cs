@@ -21,15 +21,14 @@ public sealed class FdoRendezvousInfoTests
             FdoRendezvousInfo.Parse(MixedDirectives(), FdoRendezvousProtocol.DeviceLookup);
 
         await Assert.That(candidates.Select(candidate => candidate.BaseAddress.AbsoluteUri).SequenceEqual(
-            new[]
-            {
+            [
                 "https://rvserver.local/",
                 "http://rvserver.local:8080/",
                 "https://fleet.example:8443/",
                 "https://192.0.2.9:8443/",
-            })).IsTrue();
+            ])).IsTrue();
         await Assert.That(candidates.Select(candidate => candidate.DirectiveIndex)
-            .SequenceEqual(new[] { 0, 1, 3, 3 })).IsTrue();
+            .SequenceEqual([0, 1, 3, 3])).IsTrue();
     }
 
     [Test]
@@ -39,15 +38,14 @@ public sealed class FdoRendezvousInfoTests
             FdoRendezvousInfo.Parse(MixedDirectives(), FdoRendezvousProtocol.OwnerRegistration);
 
         await Assert.That(candidates.Select(candidate => candidate.BaseAddress.AbsoluteUri).SequenceEqual(
-            new[]
-            {
+            [
                 "https://rvserver.local/",
                 "https://owner.example/",
                 "https://fleet.example:9443/",
                 "https://192.0.2.9:9443/",
-            })).IsTrue();
+            ])).IsTrue();
         await Assert.That(candidates.Select(candidate => candidate.DirectiveIndex)
-            .SequenceEqual(new[] { 0, 2, 3, 3 })).IsTrue();
+            .SequenceEqual([0, 2, 3, 3])).IsTrue();
     }
 
     [Test]
@@ -383,7 +381,7 @@ public sealed class FdoRendezvousInfoTests
             .Select(candidate => (candidate.DirectiveIndex, candidate.BaseAddress))
             .SequenceEqual(flat.Select(candidate => (candidate.DirectiveIndex, candidate.BaseAddress)))).IsTrue();
         await Assert.That(set.Directives.Select(directive => directive.DirectiveIndex).SequenceEqual(
-            role == FdoRendezvousProtocol.DeviceLookup ? new[] { 0, 1, 3 } : new[] { 0, 2, 3 })).IsTrue();
+            role == FdoRendezvousProtocol.DeviceLookup ? [0, 1, 3] : [0, 2, 3])).IsTrue();
         await Assert.That(set.Directives.All(directive =>
             directive.DelaySeconds is null &&
             directive.Candidates.All(candidate => candidate.DirectiveIndex == directive.DirectiveIndex))).IsTrue();

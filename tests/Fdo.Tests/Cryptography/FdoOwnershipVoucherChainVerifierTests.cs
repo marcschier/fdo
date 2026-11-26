@@ -355,11 +355,11 @@ public sealed class FdoOwnershipVoucherChainVerifierTests
     {
         using var fixture = new VoucherFixture();
 
-        await Assert.That(Throws<CborContentException>(() => new FdoOwnershipVoucherChainVerifier(
+        await Assert.That(Throws<CborContentException>(() => _ = new FdoOwnershipVoucherChainVerifier(
             fixture.CreateHeaderTag(version: 100), fixture.EncodedHeaderHmac, 2))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoOwnershipVoucherChainVerifier(
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoOwnershipVoucherChainVerifier(
             fixture.HeaderTag, fixture.EncodedHeaderHmac, -1))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoOwnershipVoucherChainVerifier(
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoOwnershipVoucherChainVerifier(
             fixture.HeaderTag, fixture.EncodedHeaderHmac, 256))).IsTrue();
     }
 

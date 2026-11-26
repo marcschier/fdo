@@ -34,7 +34,7 @@ internal sealed class FdoDeviceServiceInfoProcessor
     private static readonly byte[] EncodedTrue = [0xF5];
     private static readonly byte[] EncodedFalse = [0xF4];
 
-    private readonly Dictionary<string, Module> _modules = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Module> _modules = [];
     private readonly FdoServiceInfoCodec _codec;
     private readonly int _maxEncodedBytes;
     private readonly int _maxItems;
@@ -77,6 +77,14 @@ internal sealed class FdoDeviceServiceInfoProcessor
     /// Interprets every entry before returning one encoded response. A response
     /// that exceeds the configured limit is rejected rather than split.
     /// </summary>
+    /// <param name="encodedServiceInfo">The encoded ServiceInfo payload for this round.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// A ServiceInfo message is already being processed. The ServiceInfo processor has failed.
+    /// </exception>
+    /// <exception cref="CborContentException">
+    /// The Owner referenced a module that is not active. The Owner sent an invalid module activation transition.
+    /// </exception>
     public async Task<ReadOnlyMemory<byte>> ProcessAsync(
         ReadOnlyMemory<byte> encodedServiceInfo,
         CancellationToken cancellationToken = default)

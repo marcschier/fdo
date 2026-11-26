@@ -18,6 +18,7 @@ namespace Fdo.Cryptography;
 public interface IFdoDelegateOfflineStatusSource
 {
     /// <summary>Returns one detached decision per target; missing or ambiguous coverage does not grant authorization.</summary>
+    /// <param name="path">The ordered path of certificates or verification targets.</param>
     IReadOnlyList<FdoDelegateOfflineStatus> GetStatuses(IReadOnlyList<FdoDelegateRevocationTarget> path);
 }
 

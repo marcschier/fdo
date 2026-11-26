@@ -129,7 +129,7 @@ public sealed class FdoTo2PairedEtmChannelTests
         }
 
         byte[] key = SessionKey(48);
-        var suite = (FdoCoseAeadAlgorithm)Suite128;
+        const FdoCoseAeadAlgorithm suite = (FdoCoseAeadAlgorithm)Suite128;
 
         using var tooLong = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, key)
         {
@@ -196,7 +196,7 @@ public sealed class FdoTo2PairedEtmChannelTests
         }
 
         byte[] key = SessionKey(96);
-        var suite = (FdoCoseAeadAlgorithm)Suite256;
+        const FdoCoseAeadAlgorithm suite = (FdoCoseAeadAlgorithm)Suite256;
         using var device = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, key);
         using var owner = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Owner, suite, key);
         ReadOnlyMemory<byte> first = device.Seal(FdoCoseEncryptThenMacCodecTests.Plaintext(3));
@@ -211,7 +211,7 @@ public sealed class FdoTo2PairedEtmChannelTests
                 attempt = first;
                 break;
             case "counter":
-                owner.ReceiveCounter += 1;
+                owner.ReceiveCounter++;
                 attempt = second;
                 break;
             case "prefix-change":
@@ -241,21 +241,22 @@ public sealed class FdoTo2PairedEtmChannelTests
     public async Task EnforcesTurnOrderConstructionArgumentsAndFactorySelection()
     {
         byte[] key = SessionKey(48);
-        var suite = (FdoCoseAeadAlgorithm)Suite128;
+        const FdoCoseAeadAlgorithm suite = (FdoCoseAeadAlgorithm)Suite128;
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, FdoCoseAeadAlgorithm.A128Gcm, key))).IsTrue();
+            _ = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, FdoCoseAeadAlgorithm.A128Gcm, key))).IsTrue();
         await Assert.That(Throws<ArgumentException>(() =>
-            new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, new byte[32]))).IsTrue();
+            _ = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, new byte[32]))).IsTrue();
         await Assert.That(Throws<ArgumentException>(() =>
-            new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, (FdoCoseAeadAlgorithm)Suite256, new byte[80]))).IsTrue();
+            _ = new FdoTo2PairedEtmChannel(
+                FdoTo2PairedRole.Device, (FdoCoseAeadAlgorithm)Suite256, new byte[80]))).IsTrue();
         await Assert.That(Throws<ArgumentException>(() =>
-            new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, key, new byte[11]))).IsTrue();
+            _ = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, key, new byte[11]))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoTo2PairedEtmChannel((FdoTo2PairedRole)9, suite, key))).IsTrue();
+            _ = new FdoTo2PairedEtmChannel((FdoTo2PairedRole)9, suite, key))).IsTrue();
         if (!FdoAesCtr.IsSupported)
         {
             await Assert.That(Throws<PlatformNotSupportedException>(() =>
-                new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, key))).IsTrue();
+                _ = new FdoTo2PairedEtmChannel(FdoTo2PairedRole.Device, suite, key))).IsTrue();
             return;
         }
 

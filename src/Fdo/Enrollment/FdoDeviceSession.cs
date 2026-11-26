@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -52,6 +53,7 @@ public sealed class FdoDeviceSession : IDisposable
     /// request when supplied. The attestation key, opaque HMAC handle, and
     /// handlers remain caller-owned.
     /// </summary>
+    /// <param name="options">The configuration for this operation.</param>
     public FdoDeviceSession(FdoDeviceSessionOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -294,6 +296,11 @@ public sealed class FdoDeviceSession : IDisposable
     /// Device authenticates DoneAck20 and the installation callback succeeds.
     /// The caller must not run or dispose the session concurrently.
     /// </summary>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The Device session has already been started. The transport origin does not match the selected delegated route.
+    /// </exception>
     public async ValueTask<FdoDeviceEnrollment> RunAsync(
         IFdoDeviceTransport transport,
         CancellationToken cancellationToken = default)
@@ -332,6 +339,7 @@ public sealed class FdoDeviceSession : IDisposable
     }
 
     /// <summary>Clears the voucher HMAC secret after no run is active.</summary>
+    /// <exception cref="InvalidOperationException">The Device session is already processing a run.</exception>
     public void Dispose()
     {
         while (true)
@@ -591,7 +599,6 @@ public sealed class FdoDeviceSession : IDisposable
     {
         var info = new FdoTo2ServiceInfoCodec();
         var serviceInfo = new FdoServiceInfoCodec();
-        var completion = new FdoTo2CompletionCodec();
         byte[] setupNonce = RandomNumberGenerator.GetBytes(16);
         ReadOnlyMemory<byte> ready = info.EncodeDeviceReady(device.MaxOwnerServiceInfoSize, setupNonce);
         byte[] receivedSetup = await ExchangeProtectedAsync(
@@ -775,7 +782,7 @@ public sealed class FdoDeviceSession : IDisposable
             replacementHmac = new FdoHashValue(FdoInitializationFields.HmacAlgorithm(algorithm), hmac.Span);
         }
 
-        ReadOnlyMemory<byte> done = completion.EncodeDone(doneNonce, replacementHmac);
+        ReadOnlyMemory<byte> done = FdoTo2CompletionCodec.EncodeDone(doneNonce, replacementHmac);
         state.RecordDone(done, replacementHmac?.Algorithm);
         cancellationToken.ThrowIfCancellationRequested();
         DoneSendStarted = true;
@@ -785,7 +792,7 @@ public sealed class FdoDeviceSession : IDisposable
             .ConfigureAwait(false);
         try
         {
-            ReadOnlyMemory<byte> receivedNonce = completion.DecodeDoneAck(receivedDoneAck);
+            ReadOnlyMemory<byte> receivedNonce = FdoTo2CompletionCodec.DecodeDoneAck(receivedDoneAck);
             if (!CryptographicOperations.FixedTimeEquals(setupNonce, receivedNonce.Span))
             {
                 throw new CryptographicException("The DoneAck20 nonce does not match the Device challenge.");
@@ -813,6 +820,14 @@ public sealed class FdoDeviceSession : IDisposable
     /// limits require, then polls with empty messages while the Owner reports
     /// more, and returns the Owner entries assembled into one message.
     /// </summary>
+    /// <param name="session">The single-use protocol session.</param>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="channel">The protected channel used for this exchange.</param>
+    /// <param name="state">The TO2 ServiceInfo state for this run.</param>
+    /// <param name="info">The Device's ServiceInfo entries and module handlers.</param>
+    /// <param name="deviceServiceInfoLimit">The Device's limit on an encoded ServiceInfo message, in bytes.</param>
+    /// <param name="ownerMessageLimit">The Owner's limit on encoded protocol messages, in bytes.</param>
+    /// <param name="deviceMessageLimit">The Device's limit on encoded protocol messages, in bytes.</param>
     private sealed class ServiceInfoExchange(
         FdoDeviceSession session,
         IFdoDeviceTransport transport,
@@ -960,6 +975,7 @@ public sealed class FdoDeviceSession : IDisposable
         throw new FdoPeerErrorException(error.ErrorCode, (FdoTo2MessageType)requestType);
     }
 
+    [SuppressMessage("Roslynator", "RCS1075", Justification = "Error delivery must not replace the original failure.")]
     private async ValueTask TrySendErrorAsync(
         IFdoDeviceTransport transport,
         IFdoTo2PairedChannel channel,

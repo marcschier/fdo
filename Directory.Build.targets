@@ -1,4 +1,8 @@
 <Project>
+  <PropertyGroup Condition="'$(FdoVerifyDiagnostics)' == 'true' and '$(TargetFramework)' != ''">
+    <ErrorLog>$(IntermediateOutputPath)build-diagnostics.sarif</ErrorLog>
+  </PropertyGroup>
+
   <!-- Parallel version evaluations must not write concurrently to GITHUB_ENV. -->
   <Target Name="_DisableNbgvCloudBuildVarWrites" BeforeTargets="SetCloudBuildVersionVars">
     <ItemGroup>

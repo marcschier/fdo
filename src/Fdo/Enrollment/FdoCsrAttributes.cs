@@ -21,6 +21,7 @@ public sealed class FdoCsrAttributes
     private readonly byte[] _encoded;
 
     /// <summary>Snapshots one DER CsrAttrs sequence, including an empty sequence.</summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public FdoCsrAttributes(ReadOnlyMemory<byte> encoded)
     {
         if (encoded.IsEmpty || encoded.Length > ushort.MaxValue)

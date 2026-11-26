@@ -19,6 +19,8 @@ public interface IFdoDeviceCsrAttributesHandler
     /// Returns a DER PKCS#10 request. Client-key enrollment requires a valid
     /// signature; server-side key generation ignores its key and signature.
     /// </summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<ReadOnlyMemory<byte>> CreateCertificateSigningRequestAsync(
         FdoDeviceCsrAttributesRequest request,
         CancellationToken cancellationToken);

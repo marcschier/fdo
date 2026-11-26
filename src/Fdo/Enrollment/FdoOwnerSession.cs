@@ -48,7 +48,6 @@ public sealed class FdoOwnerSession : IDisposable
     private readonly FdoCborCodec _cbor = new();
     private readonly FdoTo2InitialCodec _initial = new();
     private readonly FdoTo2ServiceInfoCodec _info = new();
-    private readonly FdoTo2CompletionCodec _completion = new();
     private readonly ReadOnlyMemory<byte> _header;
     private readonly ReadOnlyMemory<byte> _headerHmac;
     private readonly IReadOnlyList<ReadOnlyMemory<byte>> _entries;
@@ -70,7 +69,7 @@ public sealed class FdoOwnerSession : IDisposable
     private readonly ReadOnlyMemory<byte> _delegateKey;
     private readonly FdoKeyExchangeSuite _exchange;
     private readonly FdoKeyExchangeSuite? _additionalExchange;
-    private readonly IReadOnlyList<long> _cipherOffers;
+    private readonly long[] _cipherOffers;
     private readonly ushort _maxMessageSize;
     private readonly ushort _maxDeviceServiceInfoSize;
     private readonly FdoServiceInfoBatches.Assembler _deviceAssembly = new();
@@ -104,6 +103,7 @@ public sealed class FdoOwnerSession : IDisposable
     /// Creates a single-use Owner session and snapshots the voucher and trust
     /// material. The signing key and enrollment handler remain caller-owned.
     /// </summary>
+    /// <param name="options">The configuration for this operation.</param>
     public FdoOwnerSession(FdoOwnerSessionOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -263,6 +263,18 @@ public sealed class FdoOwnerSession : IDisposable
     /// Processes the next request and returns its response. The body is copied
     /// before processing. Any processing failure ends this session.
     /// </summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Confirm the previous response handoff before another request. The Owner session cannot accept another request.
+    /// The Owner session is already processing a request.
+    /// </exception>
+    /// <exception cref="CborContentException">
+    /// The FDO request body exceeds the Owner message limit or is empty. The FDO request version or message type is
+    /// unexpected. The FDO response exceeds the Device's message limit.
+    /// </exception>
     public async ValueTask<FdoOwnerResponse> ProcessAsync(
         ushort protocolVersion,
         FdoTo2MessageType messageType,
@@ -361,6 +373,9 @@ public sealed class FdoOwnerSession : IDisposable
     /// Records that the host handed off the last response. If the handoff
     /// failed or its outcome is ambiguous, dispose the session instead.
     /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// No Owner response is awaiting handoff. The Owner session is already processing a request.
+    /// </exception>
     public void ConfirmResponseSent()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)
@@ -389,6 +404,7 @@ public sealed class FdoOwnerSession : IDisposable
     }
 
     /// <summary>Ends the run and clears its protected-channel key.</summary>
+    /// <exception cref="InvalidOperationException">The Owner session is already processing a request.</exception>
     public void Dispose()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)
@@ -786,7 +802,7 @@ public sealed class FdoOwnerSession : IDisposable
         EnrollmentCommitStarted = true;
         await _handler.CommitAsync(commit, cancellationToken).ConfigureAwait(false);
         CommittedEnrollment = commit;
-        ReadOnlyMemory<byte> ack = _completion.EncodeDoneAck(Require(_setupNonce));
+        ReadOnlyMemory<byte> ack = FdoTo2CompletionCodec.EncodeDoneAck(Require(_setupNonce));
         ReadOnlyMemory<byte> response = SealResponse(channel, ack);
         _phase = Phase.Complete;
         return new FdoOwnerResponse(FdoTo2MessageType.DoneAck20, response);
@@ -937,7 +953,7 @@ public sealed class FdoOwnerSession : IDisposable
             (FdoKeyExchangeSuite.DhkexId15, FdoKeyExchangeSuite.Asymkex3072) or
             (FdoKeyExchangeSuite.Asymkex3072, FdoKeyExchangeSuite.DhkexId15);
 
-    private static IReadOnlyList<long> SnapshotCipherOffers(FdoOwnerSessionOptions options)
+    private static long[] SnapshotCipherOffers(FdoOwnerSessionOptions options)
     {
         IReadOnlyList<FdoPairedCipherSuite>? additional = options.AdditionalCipherSuites;
         int count = additional?.Count ?? 0;

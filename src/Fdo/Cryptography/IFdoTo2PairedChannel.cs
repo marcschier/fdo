@@ -15,12 +15,14 @@ internal interface IFdoTo2PairedChannel : IDisposable
     /// Protects one CBOR value. The caller must dispose the channel if delivery
     /// fails or its outcome is ambiguous.
     /// </summary>
+    /// <param name="encodedPlaintext">The exact CBOR payload before channel protection.</param>
     ReadOnlyMemory<byte> Seal(ReadOnlyMemory<byte> encodedPlaintext);
 
     /// <summary>
     /// Returns the exact protected length that <see cref="Seal"/> produces for
     /// a plaintext of the given length, without consuming channel state.
     /// </summary>
+    /// <param name="plaintextLength">The plaintext length in bytes.</param>
     long GetSealedLength(int plaintextLength);
 
     /// <summary>

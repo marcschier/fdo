@@ -114,6 +114,9 @@ internal static class FdoPairedProtocol
     /// Derives the TO2 session key. AEAD suites receive one SEVK; encrypt-then-MAC
     /// suites receive SVK followed by SEK, derived with the suite's PRF.
     /// </summary>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="peerParameter">The peer's contribution to the negotiated key exchange.</param>
+    /// <param name="cipher">The cipher suite selected for protected messages.</param>
     public static byte[] DeriveSessionKey(
         IFdoPairedKeyExchange exchange, ReadOnlyMemory<byte> peerParameter, FdoCoseAeadAlgorithm cipher)
     {

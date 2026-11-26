@@ -34,6 +34,12 @@ internal sealed class FdoCoseEncrypt0Codec
     /// Encrypts one encoded FDO CBOR value using the caller's reserved nonce.
     /// The complete Encrypt0 envelope is subject to the configured byte limit.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="key">The key used by this operation.</param>
+    /// <param name="nonce">The nonce for this exchange.</param>
+    /// <param name="encodedPlaintext">The exact CBOR payload before channel protection.</param>
+    /// <exception cref="ArgumentException">The nonce length does not match the selected AEAD algorithm.</exception>
+    /// <exception cref="CborContentException">The COSE_Encrypt0 envelope exceeds the encoded byte limit.</exception>
     public ReadOnlyMemory<byte> Encrypt(
         FdoCoseAeadAlgorithm algorithm,
         ReadOnlySpan<byte> key,
@@ -86,6 +92,8 @@ internal sealed class FdoCoseEncrypt0Codec
     /// Returns the exact canonical envelope length that <see cref="Encrypt"/>
     /// produces for a plaintext of the given length.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="plaintextLength">The plaintext length in bytes.</param>
     public static long GetEncodedLength(FdoCoseAeadAlgorithm algorithm, int plaintextLength)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(plaintextLength);
@@ -100,6 +108,14 @@ internal sealed class FdoCoseEncrypt0Codec
     /// copies. The caller must enforce replay and protocol-state checks before
     /// acting on the plaintext and clear the plaintext buffer after use.
     /// </summary>
+    /// <param name="expectedAlgorithm">The required algorithm for the verified value.</param>
+    /// <param name="key">The key used by this operation.</param>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// An FDO COSE_Encrypt0 must contain three fields. An FDO COSE_Encrypt0 requires tag 16. The COSE ciphertext must
+    /// include a 16-byte authentication tag. The COSE protected header must contain only the selected algorithm. The
+    /// COSE unprotected header must contain only the IV. The IV length does not match the selected AEAD algorithm.
+    /// </exception>
     public DecryptedMessage Decrypt(
         FdoCoseAeadAlgorithm expectedAlgorithm,
         ReadOnlySpan<byte> key,

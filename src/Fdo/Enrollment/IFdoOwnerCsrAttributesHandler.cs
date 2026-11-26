@@ -14,6 +14,8 @@ namespace Fdo.Enrollment;
 public interface IFdoOwnerCsrAttributesHandler
 {
     /// <summary>Returns the attribute information for this request.</summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoCsrAttributes> GetCsrAttributesAsync(
         FdoCsrAttributesRequest request,
         CancellationToken cancellationToken);

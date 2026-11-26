@@ -21,6 +21,8 @@ public interface IFdoOwnerReenrollmentHandler
     /// <see cref="FdoEnrollmentRequest.Reenrollment"/> is null.
     /// Reject an unauthorized or unresolved request by throwing an exception.
     /// </summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<ReadOnlyMemory<byte>> GetPriorCertificateAsync(
         FdoEnrollmentRequest request,
         CancellationToken cancellationToken);
@@ -29,6 +31,8 @@ public interface IFdoOwnerReenrollmentHandler
     /// Approves the signed identity change after the library checks the CSR
     /// against the current certificate. Reject it by throwing an exception.
     /// </summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask ApproveIdentityChangeAsync(
         FdoEnrollmentRequest request,
         CancellationToken cancellationToken);

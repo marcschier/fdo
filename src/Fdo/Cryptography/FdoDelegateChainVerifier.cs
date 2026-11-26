@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Asn1;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -39,6 +41,7 @@ internal enum FdoDelegatePermissions
 /// requested operation. FDO reports this case as DELEGATE_NOT_PERMITTED,
 /// which differs from an invalid chain.
 /// </summary>
+[SuppressMessage("Roslynator", "RCS1194", Justification = "The required Delegate permission must be provided.")]
 internal sealed class FdoDelegateNotPermittedException : InvalidOperationException
 {
     public FdoDelegateNotPermittedException(FdoDelegatePermissions required)
@@ -100,6 +103,7 @@ internal sealed class FdoVerifiedDelegateChain
     }
 
     /// <summary>Requires exactly one operation permission.</summary>
+    /// <param name="permission">The single Delegate permission required for this operation.</param>
     /// <exception cref="ArgumentOutOfRangeException">The value is not exactly one defined permission.</exception>
     /// <exception cref="FdoDelegateNotPermittedException">The chain does not carry the permission.</exception>
     public void Require(FdoDelegatePermissions permission)
@@ -167,6 +171,7 @@ internal enum FdoDelegateChainFailure
 }
 
 /// <summary>Thrown when a Delegate chain is not authentic for the Owner key.</summary>
+[SuppressMessage("Roslynator", "RCS1194", Justification = "A chain verification failure classification is required.")]
 internal sealed class FdoDelegateChainException : CryptographicException
 {
     public FdoDelegateChainException(FdoDelegateChainFailure reason, string message, Exception? inner = null)
@@ -329,7 +334,7 @@ internal sealed class FdoDelegateChainVerifier
         }
     }
 
-    private IReadOnlyList<FdoDelegateRevocationTarget> BuildRevocationTargets(
+    private ReadOnlyCollection<FdoDelegateRevocationTarget> BuildRevocationTargets(
         IReadOnlyList<ParsedCertificate> certificates, ReadOnlyMemory<byte> ownerKey)
     {
         var targets = new FdoDelegateRevocationTarget[certificates.Count];
@@ -602,7 +607,7 @@ internal sealed class FdoDelegateChainVerifier
 
         public DateTimeOffset NotAfter { get; private set; }
 
-        public List<X509Extension> Extensions { get; } = new();
+        public List<X509Extension> Extensions { get; } = [];
 
         public static ParsedCertificate Parse(ReadOnlyMemory<byte> encoded)
         {

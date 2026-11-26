@@ -42,6 +42,9 @@ internal sealed class FdoCertificateChainHash
     /// Compares the chain to an expected digest obtained from an authenticated
     /// source. A match does not establish certificate or supply-chain trust.
     /// </summary>
+    /// <param name="expectedAlgorithm">The required algorithm for the verified value.</param>
+    /// <param name="encodedChain">The encoded certificate chain.</param>
+    /// <param name="expectedDigest">The authenticated digest to compare with the computed value.</param>
     public bool Verify(
         FdoHashAlgorithm expectedAlgorithm,
         ReadOnlyMemory<byte> encodedChain,

@@ -2,6 +2,7 @@
 
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
 using Fdo.Cryptography;
@@ -35,6 +36,7 @@ internal static class FdoErrorCodes
 }
 
 /// <summary>The Device refused the Owner's credential-reuse disposition.</summary>
+[SuppressMessage("Roslynator", "RCS1194", Justification = "This exception always reports the same rejection reason.")]
 internal sealed class FdoCredentialReuseDeniedException : InvalidOperationException
 {
     public FdoCredentialReuseDeniedException()

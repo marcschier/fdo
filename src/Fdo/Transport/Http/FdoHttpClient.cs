@@ -29,6 +29,7 @@ internal sealed class FdoHttpClient : IDisposable
     }
 
     /// <summary>Creates the direct transport used by the paired role runners.</summary>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
     public static FdoHttpClient CreatePaired(FdoHttpPrivateTrust? privateTrust = null)
     {
         var handler = new SocketsHttpHandler
@@ -76,6 +77,7 @@ internal sealed class FdoHttpClient : IDisposable
     /// address. Opaque terminal handlers and existing HttpClient instances are
     /// not accepted because their redirect policy cannot be inspected.
     /// </summary>
+    /// <param name="handler">The host callbacks for this session.</param>
     public FdoHttpClient(HttpMessageHandler handler)
     {
         ArgumentNullException.ThrowIfNull(handler);
@@ -85,6 +87,8 @@ internal sealed class FdoHttpClient : IDisposable
     }
 
     /// <summary>Sends without buffering the response body.</summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         ValidateHandler(_handler);

@@ -1,6 +1,7 @@
 // Copyright (c) marcschier. Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Fdo.Transport;
@@ -53,11 +54,16 @@ public enum FdoTransportFailure
 /// <summary>
 /// Raised when an FDO HTTP exchange fails below the message layer.
 /// </summary>
+[SuppressMessage("Roslynator", "RCS1194", Justification = "A transport failure classification is required.")]
 public sealed class FdoTransportException : Exception
 {
     /// <summary>
     /// Creates a transport exception.
     /// </summary>
+    /// <param name="failure">The transport failure classification.</param>
+    /// <param name="message">The diagnostic text for the failure.</param>
+    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="innerException">The underlying exception, if one is available.</param>
     public FdoTransportException(
         FdoTransportFailure failure,
         string message,

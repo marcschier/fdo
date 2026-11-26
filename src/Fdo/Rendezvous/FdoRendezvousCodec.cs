@@ -316,6 +316,7 @@ internal sealed class FdoRendezvousCodec
     /// Returns whether an untrusted rendezvous blob carries a non-null
     /// DelegateChain. Nothing about the blob is authenticated.
     /// </summary>
+    /// <param name="signedRedirect">The encoded, signed Owner redirect.</param>
     public bool HasUntrustedDelegateChain(ReadOnlyMemory<byte> signedRedirect) =>
         !ReadUntrustedRedirect(signedRedirect, allowDelegateChain: true).DelegateChain.IsEmpty;
 
@@ -325,6 +326,12 @@ internal sealed class FdoRendezvousCodec
     /// the redirect permission, and its leaf key must have signed the exact
     /// blob. The chain is not compared with any TO2 Delegate.
     /// </summary>
+    /// <param name="signedRedirect">The encoded, signed Owner redirect.</param>
+    /// <param name="encodedOwnerKey">The encoded Owner public key used in this exchange.</param>
+    /// <param name="verificationTime">The instant used to evaluate certificate validity.</param>
+    /// <param name="expectedTo0">The independently expected Owner registration data.</param>
+    /// <param name="expectedHash">The trusted hash against which to verify the value.</param>
+    /// <param name="offlineRevocation">The optional offline status policy for the Delegate path.</param>
     /// <exception cref="NotSupportedException">The blob carries no DelegateChain.</exception>
     /// <exception cref="FdoDelegateChainException">The chain is not authentic for the Owner key.</exception>
     /// <exception cref="FdoDelegateNotPermittedException">The chain lacks the redirect permission.</exception>
@@ -541,7 +548,7 @@ internal sealed class FdoRendezvousCodec
         return _cbor.ValidateAndCopy(writer.Encode());
     }
 
-    internal ReadOnlyMemory<byte> EncodeRedirectPage(
+    internal static ReadOnlyMemory<byte> EncodeRedirectPage(
         IReadOnlyList<FdoRendezvousRegistrationRecord> records, int index, int count)
     {
         var writer = new CborWriter(CborConformanceMode.Canonical);

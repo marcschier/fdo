@@ -52,6 +52,16 @@ internal sealed class FdoTo2OwnerProofCodec
     /// authorize the Device, and establish that this private key is the
     /// voucher's final Owner key before sending it.
     /// </summary>
+    /// <param name="encodedHeaderTag">The exact voucher header, including its CBOR byte-string wrapper.</param>
+    /// <param name="encodedHeaderHmac">The encoded voucher header HMAC.</param>
+    /// <param name="entryCount">The number of voucher entries.</param>
+    /// <param name="ownerNonce">The nonce supplied by the Owner for this exchange.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="ownerParameter">The Owner's contribution to the negotiated key exchange.</param>
+    /// <param name="maxOwnerMessageSize">The maximum encoded Owner message body size, in bytes.</param>
+    /// <param name="ownerKey">The Owner public key that anchors verification.</param>
+    /// <param name="delegateSigner">The private key that signs on behalf of the Owner.</param>
+    /// <param name="encodedVoucherOwnerKey">The encoded final Owner key authenticated by the voucher.</param>
     /// <remarks>
     /// Without a Delegate, <paramref name="ownerKey"/> is the voucher's final
     /// Owner private key and signs the proof. With a
@@ -59,6 +69,10 @@ internal sealed class FdoTo2OwnerProofCodec
     /// the Delegate chain is verified against it at the supplied time, and the
     /// signing key must be the chain's leaf key.
     /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">Paired onboarding requires at least one voucher entry.</exception>
+    /// <exception cref="CryptographicException">
+    /// The private signing key does not match the voucher Owner key.
+    /// </exception>
     public ReadOnlyMemory<byte> Sign(
         ReadOnlyMemory<byte> encodedHeaderTag,
         ReadOnlyMemory<byte> encodedHeaderHmac,
@@ -139,6 +153,10 @@ internal sealed class FdoTo2OwnerProofCodec
     /// Verifies an Owner's configured Delegate against the voucher's final
     /// Owner key before any proof is signed, and returns the verified chain.
     /// </summary>
+    /// <param name="encodedHeaderTag">The exact voucher header, including its CBOR byte-string wrapper.</param>
+    /// <param name="ownerKey">The Owner public key that anchors verification.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="delegateSigner">The private key that signs on behalf of the Owner.</param>
     internal FdoVerifiedDelegateChain VerifyDelegateSigner(
         ReadOnlyMemory<byte> encodedHeaderTag,
         AsymmetricAlgorithm ownerKey,
@@ -165,6 +183,11 @@ internal sealed class FdoTo2OwnerProofCodec
     /// Requires the signing key to be the verified Delegate leaf key and
     /// returns its COSE algorithm.
     /// </summary>
+    /// <param name="verified">The previously verified data for this operation.</param>
+    /// <param name="signingKey">The private key that signs the encoded value.</param>
+    /// <exception cref="CryptographicException">
+    /// The Delegate signing key is not the Delegate leaf certificate key.
+    /// </exception>
     internal FdoCoseSignatureAlgorithm RequireDelegateSigningKey(
         FdoVerifiedDelegateChain verified, AsymmetricAlgorithm signingKey)
     {
@@ -185,6 +208,17 @@ internal sealed class FdoTo2OwnerProofCodec
     /// key, checks the Device's voucher credentials, and returns a pending
     /// verifier. The early key is not trusted until all entries are checked.
     /// </summary>
+    /// <param name="encodedProof">The exact encoded proof to read or verify.</param>
+    /// <param name="expectedOwnerNonce">The Owner nonce that the proof must echo.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="expectedGuid">The independently known Device GUID.</param>
+    /// <param name="expectedManufacturerKeyHash">The provisioned hash of the manufacturer key.</param>
+    /// <param name="expectedHmacAlgorithm">The HMAC algorithm required by the provisioned credential.</param>
+    /// <param name="deviceHmacSecret">The Device's voucher HMAC key.</param>
+    /// <param name="delegateVerificationTime">The instant used to check the Delegate certificates.</param>
+    /// <param name="captureRevocationTargets">
+    /// Whether to retain the verified issuer path for offline status checks.
+    /// </param>
     public PendingOwnerProof BeginDeviceVerification(
         ReadOnlyMemory<byte> encodedProof,
         ReadOnlyMemory<byte> expectedOwnerNonce,
@@ -224,6 +258,18 @@ internal sealed class FdoTo2OwnerProofCodec
     /// Verifies the early proof and Device credentials using a host-owned
     /// HMAC handle. The voucher entries must still be checked.
     /// </summary>
+    /// <param name="encodedProof">The exact encoded proof to read or verify.</param>
+    /// <param name="expectedOwnerNonce">The Owner nonce that the proof must echo.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="expectedGuid">The independently known Device GUID.</param>
+    /// <param name="expectedManufacturerKeyHash">The provisioned hash of the manufacturer key.</param>
+    /// <param name="expectedHmacAlgorithm">The HMAC algorithm required by the provisioned credential.</param>
+    /// <param name="computeHmac">The host callback that computes the voucher HMAC without exporting its key.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="delegateVerificationTime">The instant used to check the Delegate certificates.</param>
+    /// <param name="captureRevocationTargets">
+    /// Whether to retain the verified issuer path for offline status checks.
+    /// </param>
     public async ValueTask<PendingOwnerProof> BeginDeviceVerificationAsync(
         ReadOnlyMemory<byte> encodedProof,
         ReadOnlyMemory<byte> expectedOwnerNonce,
@@ -329,6 +375,7 @@ internal sealed class FdoTo2OwnerProofCodec
     }
 
     /// <summary>Returns OwnerPubKey and the encoded Delegate chain, which is empty when null.</summary>
+    /// <param name="payload">The payload of the FDO message.</param>
     private static (ReadOnlyMemory<byte> Key, ReadOnlyMemory<byte> Chain) ReadAdvertisedKey(ReadOnlyMemory<byte> payload)
     {
         var reader = new CborReader(payload, CborConformanceMode.Strict);
@@ -582,6 +629,10 @@ internal sealed class FdoTo2OwnerProofCodec
     /// A Delegate that signs the Owner proof: its private key, its leaf-first
     /// certificate chain, and the time at which the chain must be valid.
     /// </summary>
+    /// <param name="SigningKey">The private key that signs the encoded value.</param>
+    /// <param name="Chain">The ordered certificates that make up the chain.</param>
+    /// <param name="VerificationTime">The instant used to evaluate certificate validity.</param>
+    /// <param name="OfflineRevocation">The optional offline status policy for the Delegate path.</param>
     public sealed record DelegateSigner(
         AsymmetricAlgorithm SigningKey,
         IReadOnlyList<ReadOnlyMemory<byte>> Chain,

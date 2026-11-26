@@ -40,7 +40,7 @@ internal sealed class LoopbackHttpServer : IDisposable
         CancellationToken cancellationToken)
     {
         using TcpClient connection = await _listener.AcceptTcpClientAsync(cancellationToken);
-        using NetworkStream stream = connection.GetStream();
+        await using NetworkStream stream = connection.GetStream();
         RecordedRequest request = await ReadRequestAsync(stream, cancellationToken);
         byte[] responseHeader = Encoding.ASCII.GetBytes(
             $"HTTP/1.1 {statusAndHeaders}\r\nContent-Length: {responseBody.Length.ToString(CultureInfo.InvariantCulture)}\r\nConnection: close\r\n\r\n");
@@ -61,8 +61,8 @@ internal sealed class LoopbackHttpServer : IDisposable
         while (!session.IsComplete)
         {
             using TcpClient connection = await _listener.AcceptTcpClientAsync(cancellationToken);
-            using NetworkStream network = connection.GetStream();
-            using var tls = serverCertificate is null ? null : new SslStream(network, leaveInnerStreamOpen: true);
+            await using NetworkStream network = connection.GetStream();
+            await using var tls = serverCertificate is null ? null : new SslStream(network, leaveInnerStreamOpen: true);
             if (tls is not null)
             {
                 await tls.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
@@ -71,11 +71,11 @@ internal sealed class LoopbackHttpServer : IDisposable
                 }, cancellationToken);
             }
 
-            Stream stream = tls is null ? network : tls;
+            Stream stream = (Stream?)tls ?? network;
             RecordedRequest request = await ReadRequestAsync(stream, cancellationToken, tls is not null);
             requests.Add(request);
             onRequest?.Invoke(request);
-            using var body = new MemoryStream(request.Body, writable: false);
+            await using var body = new MemoryStream(request.Body, writable: false);
             FdoHttpServerResponse response = await session.ProcessAsync(new FdoHttpServerRequest
             {
                 Method = request.Method.Method,
@@ -115,7 +115,7 @@ internal sealed class LoopbackHttpServer : IDisposable
     public async Task<bool> AcceptTlsOnceAsync(X509Certificate2 certificate, CancellationToken cancellationToken)
     {
         using TcpClient connection = await _listener.AcceptTcpClientAsync(cancellationToken);
-        using var stream = new SslStream(connection.GetStream());
+        await using var stream = new SslStream(connection.GetStream());
         try
         {
             await stream.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
@@ -139,7 +139,7 @@ internal sealed class LoopbackHttpServer : IDisposable
     {
         var header = new List<byte>();
         byte[] one = new byte[1];
-        while (true)
+        do
         {
             await stream.ReadExactlyAsync(one, cancellationToken);
             header.Add(one[0]);
@@ -147,14 +147,9 @@ internal sealed class LoopbackHttpServer : IDisposable
             {
                 throw new InvalidDataException("Loopback request headers exceed the test limit.");
             }
-
-            if (header.Count >= 4
-                && header[^4] == '\r' && header[^3] == '\n'
-                && header[^2] == '\r' && header[^1] == '\n')
-            {
-                break;
-            }
         }
+        while (header.Count < 4 || header[^4] != '\r' || header[^3] != '\n'
+            || header[^2] != '\r' || header[^1] != '\n');
 
         string[] lines = Encoding.ASCII.GetString(header.ToArray()).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         string[] requestLine = lines[0].Split(' ');

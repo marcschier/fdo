@@ -15,6 +15,9 @@ namespace Fdo.Enrollment;
 public interface IFdoDeviceServerKeygenHandler
 {
     /// <summary>Durably installs the enrollment and DER PKCS#8 private key.</summary>
+    /// <param name="enrollment">The enrollment data to commit, validate, or install.</param>
+    /// <param name="privateKeyPkcs8">The DER PKCS#8 private key.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask InstallAsync(
         FdoDeviceEnrollment enrollment,
         ReadOnlyMemory<byte> privateKeyPkcs8,

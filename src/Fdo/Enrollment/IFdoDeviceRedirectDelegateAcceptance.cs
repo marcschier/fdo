@@ -1,6 +1,7 @@
 // Copyright (c) marcschier. Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Fdo.Rendezvous;
@@ -24,6 +25,8 @@ namespace Fdo.Enrollment;
 public interface IFdoDeviceRedirectDelegateAcceptance
 {
     /// <summary>Returns true to continue the run after this redirect Delegate.</summary>
+    /// <param name="evidence">The verified protocol evidence for the host's decision.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<bool> AcceptAsync(FdoRedirectDelegateEvidence evidence, CancellationToken cancellationToken);
 }
 
@@ -63,6 +66,7 @@ public sealed class FdoRedirectDelegateEvidence
 }
 
 /// <summary>The Device host did not accept the Delegate that signed the TO1 redirect.</summary>
+[SuppressMessage("Roslynator", "RCS1194", Justification = "This exception always reports the same rejection reason.")]
 public sealed class FdoRedirectDelegateNotAcceptedException : InvalidOperationException
 {
     /// <summary>Creates the exception.</summary>

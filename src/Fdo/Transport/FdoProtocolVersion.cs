@@ -66,10 +66,14 @@ internal readonly struct FdoProtocolVersion : IEquatable<FdoProtocolVersion>
     /// <summary>
     /// Compares two versions for equality.
     /// </summary>
+    /// <param name="left">The first value to compare.</param>
+    /// <param name="right">The second value to compare.</param>
     public static bool operator ==(FdoProtocolVersion left, FdoProtocolVersion right) => left.Equals(right);
 
     /// <summary>
     /// Compares two versions for inequality.
     /// </summary>
+    /// <param name="left">The first value to compare.</param>
+    /// <param name="right">The second value to compare.</param>
     public static bool operator !=(FdoProtocolVersion left, FdoProtocolVersion right) => !left.Equals(right);
 }

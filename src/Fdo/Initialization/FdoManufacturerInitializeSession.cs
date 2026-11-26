@@ -183,11 +183,15 @@ public sealed class FdoManufacturerInitializeVoucher
 public interface IFdoManufacturerInitializeHandler
 {
     /// <summary>Authorizes and reserves the Device, then retains and returns one proposal.</summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoManufacturerInitializeProposal> AuthorizeAndPrepareAsync(
         FdoManufacturerInitializeRequest request,
         CancellationToken cancellationToken);
 
     /// <summary>Durably retains the complete zero-entry voucher.</summary>
+    /// <param name="voucher">The ownership voucher for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask PersistVoucherAsync(
         FdoManufacturerInitializeVoucher voucher,
         CancellationToken cancellationToken);
@@ -229,6 +233,7 @@ public sealed class FdoManufacturerInitializeSession : IDisposable
     private int _busy;
 
     /// <summary>Creates a single-use manufacturing station session.</summary>
+    /// <param name="options">The configuration for this operation.</param>
     public FdoManufacturerInitializeSession(FdoManufacturerInitializeOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -266,6 +271,17 @@ public sealed class FdoManufacturerInitializeSession : IDisposable
     public bool DoneHandoffConfirmed { get; private set; }
 
     /// <summary>Processes one request. A processing failure ends this session.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Confirm the previous response handoff before another request. The manufacturing session is already processing a
+    /// request.
+    /// </exception>
+    /// <exception cref="CborContentException">
+    /// The Device Initialize request version or message type is unexpected.
+    /// </exception>
     public async ValueTask<FdoDeviceInitializeResponse> ProcessAsync(
         ushort protocolVersion,
         FdoDeviceInitializeMessageType messageType,
@@ -324,6 +340,9 @@ public sealed class FdoManufacturerInitializeSession : IDisposable
     }
 
     /// <summary>Records a successful response handoff, not Device receipt.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// No manufacturing response is awaiting handoff. The manufacturing session is already processing a request.
+    /// </exception>
     public void ConfirmResponseSent()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)
@@ -351,6 +370,9 @@ public sealed class FdoManufacturerInitializeSession : IDisposable
     }
 
     /// <summary>Ends the session without changing host storage.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// The manufacturing session is already processing a request.
+    /// </exception>
     public void Dispose()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)

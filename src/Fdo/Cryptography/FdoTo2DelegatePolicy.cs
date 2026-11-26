@@ -38,6 +38,13 @@ internal static class FdoTo2DelegatePolicy
     /// Verifies the chain against the advertised voucher Owner key and applies
     /// the paired TO2 restrictions.
     /// </summary>
+    /// <param name="chain">The ordered certificates that make up the chain.</param>
+    /// <param name="ownerKey">The Owner public key that anchors verification.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="verificationTime">The instant used to evaluate certificate validity.</param>
+    /// <param name="captureRevocationTargets">
+    /// Whether to retain the verified issuer path for offline status checks.
+    /// </param>
     /// <exception cref="FdoDelegateChainException">The chain is not authentic for the Owner key.</exception>
     /// <exception cref="FdoDelegateNotPermittedException">
     /// The chain carries no onboarding permission, for example a chain that may only redirect.
@@ -72,6 +79,7 @@ internal static class FdoTo2DelegatePolicy
     }
 
     /// <summary>Rejects the ASYMKEX suites for a delegated run.</summary>
+    /// <param name="exchange">The selected key exchange suite.</param>
     /// <exception cref="NotSupportedException">The suite is ASYMKEX.</exception>
     public static void RequireExchange(FdoKeyExchangeSuite exchange)
     {
@@ -85,6 +93,7 @@ internal static class FdoTo2DelegatePolicy
     /// Returns true when §5.6 requires FDO disable: the disable permission is
     /// present, or neither credential permission is.
     /// </summary>
+    /// <param name="permissions">The Delegate permissions granted by the verified chain.</param>
     public static bool RequiresDisable(FdoDelegatePermissions permissions) =>
         (permissions & FdoDelegatePermissions.OnboardDisable) != 0 ||
         (permissions & (FdoDelegatePermissions.OnboardNewCredentials |

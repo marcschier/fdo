@@ -19,6 +19,12 @@ public enum FdoDeviceHmacAlgorithm
 }
 
 /// <summary>Device metadata advertised by the paired devmod inventory.</summary>
+/// <param name="Os">The operating system reported by the Device.</param>
+/// <param name="Architecture">The Device architecture reported in ServiceInfo.</param>
+/// <param name="Version">The Device software version reported in ServiceInfo.</param>
+/// <param name="Device">The Device description reported in ServiceInfo.</param>
+/// <param name="Separator">The separator reported in the Device's ServiceInfo inventory.</param>
+/// <param name="BinaryFormats">The binary formats advertised by the Device.</param>
 public sealed record FdoDeviceMetadata(
     string Os,
     string Architecture,

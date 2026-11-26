@@ -18,9 +18,9 @@ public sealed class FdoAesCbcTests
     /// <summary>
     /// NIST SP 800-38A F.2.1 and F.2.5 supply the first two blocks.
     /// </summary>
-    /// <param name="keyHex"></param>
-    /// <param name="ciphertextHex"></param>
-    /// <returns></returns>
+    /// <param name="keyHex">The NIST AES key in hexadecimal.</param>
+    /// <param name="ciphertextHex">The expected ciphertext in hexadecimal, including the padding block.</param>
+    /// <returns>A task that completes after the vector assertions.</returns>
     [Test]
     [Arguments(Key128, "7649ABAC8119B246CEE98E9B12E9197D5086CB9B507219EE95DB113A917678B2")]
     [Arguments(Key256, "F58C4C04D6E5F1BA779EABFB5F7BFBD69CFC4E967EDB808D679F777BC6702C7D")]

@@ -14,6 +14,8 @@ namespace Fdo.Enrollment;
 public interface IFdoOwnerCaCertificatesHandler
 {
     /// <summary>Returns the material for one activated <c>fdo.csr</c> request.</summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoCaCertificates> GetCaCertificatesAsync(
         FdoCaCertificatesRequest request,
         CancellationToken cancellationToken);

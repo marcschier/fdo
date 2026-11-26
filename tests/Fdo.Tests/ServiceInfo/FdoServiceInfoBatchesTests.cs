@@ -42,7 +42,7 @@ public sealed class FdoServiceInfoBatchesTests
 
         IReadOnlyList<IReadOnlyList<Entry>> batches = FdoServiceInfoBatches.Split(entries, limit, Plain, long.MaxValue);
 
-        await Assert.That(batches.Select(batch => batch.Count).SequenceEqual(new[] { 2, 2, 1 })).IsTrue();
+        await Assert.That(batches.Select(batch => batch.Count).SequenceEqual([2, 2, 1])).IsTrue();
         await Assert.That(batches.SelectMany(batch => batch).SequenceEqual(entries)).IsTrue();
         foreach (IReadOnlyList<Entry> batch in batches)
         {

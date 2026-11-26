@@ -27,7 +27,7 @@ namespace Fdo.Rendezvous;
 public sealed class FdoRendezvousServerSession : IDisposable
 {
     private readonly FdoRendezvousCodec _codec = new();
-    private readonly IFdoOwnerDeviceTrustPolicy _trustPolicy;
+    private readonly FdoPinnedDeviceTrustPolicy _trustPolicy;
     private readonly IFdoRendezvousRegistrationStore? _store;
     private readonly IFdoAtomicRendezvousRegistrationStore? _atomicStore;
     private readonly IFdoRendezvousRegistrationAdmission? _admission;
@@ -52,6 +52,8 @@ public sealed class FdoRendezvousServerSession : IDisposable
     private bool _awaitingHandoff;
 
     /// <summary>Creates a single-use server session for the selected protocol.</summary>
+    /// <param name="options">The configuration for this operation.</param>
+    /// <param name="protocol">The selected FDO subprotocol.</param>
     public FdoRendezvousServerSession(FdoRendezvousServerOptions options, FdoRendezvousProtocol protocol)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -124,6 +126,10 @@ public sealed class FdoRendezvousServerSession : IDisposable
         _phase == Phase.Pages && !_lastRvMore.IsEmpty && !_pageRepeated;
 
     /// <summary>Processes one request. A processing failure ends the session.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     public ValueTask<FdoRendezvousResponse> ProcessAsync(
         ushort protocolVersion,
         FdoRendezvousMessageType messageType,
@@ -132,12 +138,22 @@ public sealed class FdoRendezvousServerSession : IDisposable
         ProcessAsync(protocolVersion, messageType, encodedBody, null, cancellationToken);
 
     /// <summary>Processes a request with the host's observed submitter address.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="observedSource">The source address observed by the receiving host.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// Delegated TO0 requires the observed address of this OwnerSign request,
     /// resolved through the host's trusted proxy policy if applicable. An
     /// address from Hello, a forwarded header alone, or the signed TO2
     /// destination is not the observed submitter address.
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// Confirm the previous response handoff before another request. The Rendezvous Server session is already
+    /// processing a request.
+    /// </exception>
+    /// <exception cref="CborContentException">The rendezvous request version or message type is unexpected.</exception>
     public async ValueTask<FdoRendezvousResponse> ProcessAsync(
         ushort protocolVersion, FdoRendezvousMessageType messageType, ReadOnlyMemory<byte> encodedBody,
         IPAddress? observedSource, CancellationToken cancellationToken)
@@ -191,6 +207,9 @@ public sealed class FdoRendezvousServerSession : IDisposable
     }
 
     /// <summary>Records a successful response handoff, not peer receipt.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// No rendezvous response is awaiting handoff. The Rendezvous Server session is already processing a request.
+    /// </exception>
     public void ConfirmResponseSent()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)
@@ -220,6 +239,9 @@ public sealed class FdoRendezvousServerSession : IDisposable
     }
 
     /// <summary>Ends the session without changing host storage.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// The Rendezvous Server session is already processing a request.
+    /// </exception>
     public void Dispose()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)
@@ -531,7 +553,7 @@ public sealed class FdoRendezvousServerSession : IDisposable
             throw new InvalidOperationException("The next rendezvous blob does not fit in a response.");
         }
 
-        _lastRedirectPage = _codec.EncodeRedirectPage(records, index, _nextBlobIndex - index);
+        _lastRedirectPage = FdoRendezvousCodec.EncodeRedirectPage(records, index, _nextBlobIndex - index);
         _phase = _nextBlobIndex == records.Length && _lastRvMore.IsEmpty ? Phase.Complete : Phase.Pages;
         return new FdoRendezvousResponse(200, FdoRendezvousMessageType.Redirect, _lastRedirectPage);
     }

@@ -43,22 +43,18 @@ public sealed class FdoDeviceServiceInfoProcessorTests
 
         IReadOnlyList<Entry> response = Decode(await processor.ProcessAsync(input));
 
-        await Assert.That(calls.SequenceEqual(new[]
-        {
-            "first:active=F5",
-            "first:read=01",
-            "second:active=F5",
-            "first:read=02",
-            "second:read=03",
-        })).IsTrue();
-        await Assert.That(response.Select(entry => entry.Key).SequenceEqual(new[]
-        {
-            "first:active", "first:reply", "second:active", "first:reply", "second:reply",
-        })).IsTrue();
-        await Assert.That(response.Select(entry => Convert.ToHexString(entry.EncodedValue.Span)).SequenceEqual(new[]
-        {
-            "F5", "01", "F5", "02", "03",
-        })).IsTrue();
+        await Assert.That(calls.SequenceEqual(
+            [
+                "first:active=F5",
+                "first:read=01",
+                "second:active=F5",
+                "first:read=02",
+                "second:read=03",
+            ])).IsTrue();
+        await Assert.That(response.Select(entry => entry.Key).SequenceEqual(
+            ["first:active", "first:reply", "second:active", "first:reply", "second:reply"])).IsTrue();
+        await Assert.That(response.Select(entry => Convert.ToHexString(entry.EncodedValue.Span)).SequenceEqual(
+            ["F5", "01", "F5", "02", "03"])).IsTrue();
         await Assert.That(processor.IsFaulted).IsFalse();
     }
 
@@ -79,7 +75,7 @@ public sealed class FdoDeviceServiceInfoProcessorTests
             entry.Key == "missing:active" && entry.EncodedValue.Span.SequenceEqual(False))).IsTrue();
         await Assert.That(response.Any(entry =>
             entry.Key == "known:active" && entry.EncodedValue.Span.SequenceEqual(True))).IsTrue();
-        await Assert.That(calls.SequenceEqual(new[] { "known:active=F5", "known:configure=02" })).IsTrue();
+        await Assert.That(calls.SequenceEqual(["known:active=F5", "known:configure=02"])).IsTrue();
         await Assert.That(processor.IsFaulted).IsFalse();
     }
 
@@ -100,7 +96,7 @@ public sealed class FdoDeviceServiceInfoProcessorTests
         await Assert.That(first.Count).IsEqualTo(1);
         await Assert.That(first[0].Key).IsEqualTo("m:active");
         await Assert.That(second.Count).IsEqualTo(0);
-        await Assert.That(calls.SequenceEqual(new[] { "m:active=F5", "m:work=01", "m:active=F4" })).IsTrue();
+        await Assert.That(calls.SequenceEqual(["m:active=F5", "m:work=01", "m:active=F4"])).IsTrue();
         await CatchAsync<CborContentException>(() => processor.ProcessAsync(Encode(
             new Entry("m:work", new byte[] { 0x01 }))));
         await Assert.That(processor.IsFaulted).IsTrue();
@@ -144,7 +140,7 @@ public sealed class FdoDeviceServiceInfoProcessorTests
             new Entry("m:later", new byte[] { 0x02 }))));
 
         await Assert.That(failure.Message).IsEqualTo("module failed");
-        await Assert.That(calls.SequenceEqual(new[] { "m:active=F5", "m:work=01" })).IsTrue();
+        await Assert.That(calls.SequenceEqual(["m:active=F5", "m:work=01"])).IsTrue();
         await Assert.That(processor.IsFaulted).IsTrue();
         await CatchAsync<InvalidOperationException>(() => processor.ProcessAsync(Encode()));
     }
@@ -154,7 +150,7 @@ public sealed class FdoDeviceServiceInfoProcessorTests
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var module = new RecordingModule("m", new List<string>())
+        var module = new RecordingModule("m", [])
         {
             OnReceive = (_, _, _) => WaitForReleaseAsync(started, release),
         };
@@ -175,7 +171,7 @@ public sealed class FdoDeviceServiceInfoProcessorTests
     public async Task CancellationDuringModuleExecutionFaultsTheExchange()
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var module = new RecordingModule("m", new List<string>())
+        var module = new RecordingModule("m", [])
         {
             OnReceive = (_, _, token) => WaitForCancellationAsync(started, token),
         };
@@ -195,7 +191,7 @@ public sealed class FdoDeviceServiceInfoProcessorTests
     [Test]
     public async Task AggregateResponseHonorsTheExactByteLimit()
     {
-        static RecordingModule CreateModule() => new("m", new List<string>())
+        static RecordingModule CreateModule() => new("m", [])
         {
             OnReceive = (name, _, _) => name == "go"
                 ? Result(new Entry("m:result", new byte[] { 0x01 }))
@@ -213,14 +209,14 @@ public sealed class FdoDeviceServiceInfoProcessorTests
 
         await Assert.That(response.Length).IsEqualTo(25);
         await Assert.That(Decode(response).Select(entry => entry.Key).SequenceEqual(
-            new[] { "m:active", "m:result" })).IsTrue();
+            ["m:active", "m:result"])).IsTrue();
         await Assert.That(belowLimit.IsFaulted).IsTrue();
     }
 
     [Test]
     public async Task InvalidModuleOutputFaultsTheExchange()
     {
-        var module = new RecordingModule("m", new List<string>())
+        var module = new RecordingModule("m", [])
         {
             OnReceive = (_, _, _) => Result(new Entry("m:active", True)),
         };

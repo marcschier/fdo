@@ -1,0 +1,3 @@
+[**/*Tests.cs]
+# Public fixture methods are TUnit instance entry points. Keep checking non-public helpers.
+dotnet_code_quality.CA1822.api_surface = private, internal

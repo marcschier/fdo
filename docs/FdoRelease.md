@@ -5,7 +5,8 @@ Install the SDK from `global.json` and the .NET 10 runtime. Use the .NET
 
 ```powershell
 dotnet restore Fdo.slnx
-dotnet build Fdo.slnx -c Release --no-restore
+dotnet build Fdo.slnx -c Release --no-restore --no-incremental -p:FdoVerifyDiagnostics=true
+pwsh -File eng/Test-BuildDiagnostics.ps1
 dotnet format whitespace Fdo.slnx --verify-no-changes --no-restore
 pwsh -File eng/Test-SourceConventions.ps1
 dotnet test --project tests/Fdo.Tests/Fdo.Tests.csproj -c Release --no-build
@@ -18,6 +19,12 @@ checks the MIT license, package README, source commit, dependencies, signed
 library assemblies, and local symbol package. Only `src/Fdo` is packable.
 `nuget.config` limits restore and advisory checks to NuGet.org. Build
 tools are private assets and do not become package dependencies.
+
+The diagnostic check requires a compiler report for every project and target.
+It rejects unresolved errors, warnings, and informational diagnostics. A
+suppression belongs next to the affected symbol or test convention, with a
+reason. For example, the HTTP overloads retain their existing positional
+parameter order, and protocol exceptions retain their required failure data.
 
 ## Assembly identity and versions
 

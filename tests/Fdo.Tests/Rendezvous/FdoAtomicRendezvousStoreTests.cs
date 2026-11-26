@@ -199,6 +199,10 @@ public sealed class FdoAtomicRendezvousStoreTests
     /// Test adapter: serializes transactions between instances in this process.
     /// Reopen tests file persistence and lost acknowledgment, not power-loss durability.
     /// </summary>
+    /// <param name="path">Path to the journal file.</param>
+    /// <param name="gate">Synchronization shared by stores using that journal.</param>
+    /// <param name="utcNow">The clock used for registration expiry.</param>
+    /// <param name="loseAcknowledgment">Whether to simulate losing the acknowledgment after persisting.</param>
     private sealed class JournalStore(string path, object gate, Func<DateTimeOffset> utcNow, bool loseAcknowledgment)
         : IFdoAtomicRendezvousRegistrationStore
     {

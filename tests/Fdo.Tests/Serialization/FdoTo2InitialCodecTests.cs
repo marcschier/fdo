@@ -19,6 +19,8 @@ public sealed class FdoTo2InitialCodecTests
     private const string AckHex =
         "8841048050000102030405060708090A0B0C0D0E0F19FFFF826745434448323536674543444833383482010350202122232425262728292A2B2C2D2E2F822F582043F7EC2CFA7686EF378707BFBA98A1C2DF78101B3A4039DDD121F060444C9277";
 
+    private static readonly string[] Ecdh256Only = ["ECDH256"];
+
     [Test]
     public async Task InitialMessagesMatchTheSpecifiedFieldOrder()
     {
@@ -38,7 +40,7 @@ public sealed class FdoTo2InitialCodecTests
         await Assert.That(Convert.ToHexString(probe.Sugar.Span)).IsEqualTo("101112131415161718191A1B1C1D1E1F");
         await Assert.That(probe.MaxDeviceMessageSize).IsEqualTo(ushort.MaxValue);
         await Assert.That(probe.HashTypes.SequenceEqual(new long[] { -16, -43 })).IsTrue();
-        await Assert.That(ack.KeyExchangeSuites.SequenceEqual(new[] { "ECDH256", "ECDH384" })).IsTrue();
+        await Assert.That(ack.KeyExchangeSuites.SequenceEqual(["ECDH256", "ECDH384"])).IsTrue();
         await Assert.That(ack.CipherSuites.SequenceEqual(new long[] { 1, 3 })).IsTrue();
         await Assert.That(Convert.ToHexString(ack.NonceTo2ProveDv.Span)).IsEqualTo("202122232425262728292A2B2C2D2E2F");
     }
@@ -137,13 +139,13 @@ public sealed class FdoTo2InitialCodecTests
         Acknowledgement ack = codec.DecodeAcknowledgement(Convert.FromHexString(AckHex));
         ReadOnlyMemory<byte> oneOfEach = codec.EncodeAcknowledgement(ack with
         {
-            KeyExchangeSuites = new[] { "ECDH256" },
+            KeyExchangeSuites = ["ECDH256"],
             CipherSuites = new long[] { 1 },
         });
         codec.RequireOfferedSuites(oneOfEach, FdoKeyExchangeSuite.Ecdh256, FdoCoseAeadAlgorithm.A128Gcm);
         ReadOnlyMemory<byte> ccmOffer = codec.EncodeAcknowledgement(ack with
         {
-            KeyExchangeSuites = new[] { "ECDH256" },
+            KeyExchangeSuites = ["ECDH256"],
             CipherSuites = new long[] { 30 },
         });
         codec.RequireOfferedSuites(ccmOffer, FdoKeyExchangeSuite.Ecdh256, FdoCoseAeadAlgorithm.AesCcm16_128_128);
@@ -172,7 +174,7 @@ public sealed class FdoTo2InitialCodecTests
         Acknowledgement decodedAck = codec.DecodeAcknowledgement(codec.EncodeAcknowledgement(ack));
 
         await Assert.That(decodedProbe.HashTypes.SequenceEqual(new long[] { -16, 123 })).IsTrue();
-        await Assert.That(decodedAck.KeyExchangeSuites.SequenceEqual(new[] { "future-kex", "ECDH256" })).IsTrue();
+        await Assert.That(decodedAck.KeyExchangeSuites.SequenceEqual(["future-kex", "ECDH256"])).IsTrue();
         await Assert.That(decodedAck.CipherSuites.SequenceEqual(new long[] { -17760703, 1 })).IsTrue();
     }
 
@@ -202,8 +204,8 @@ public sealed class FdoTo2InitialCodecTests
         [
             wrongAckShape,
             RawAck(guid, Array.Empty<string>(), new long[] { 1 }, new byte[16]),
-            RawAck(guid, new[] { "ECDH256" }, Array.Empty<long>(), new byte[16]),
-            RawAck(guid, new[] { "ECDH256" }, new long[] { 1 }, new byte[15]),
+            RawAck(guid, Ecdh256Only, Array.Empty<long>(), new byte[16]),
+            RawAck(guid, Ecdh256Only, new long[] { 1 }, new byte[15]),
         ];
 
         foreach (byte[] input in malformedProbes)

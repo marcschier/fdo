@@ -200,9 +200,9 @@ public sealed class FdoX5ChainCodecTests
     public async Task NonpositiveLimitsAreRejected()
     {
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoX5ChainCodec(maxEncodedBytes: 0))).IsTrue();
+            _ = new FdoX5ChainCodec(maxEncodedBytes: 0))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoX5ChainCodec(maxItems: 0))).IsTrue();
+            _ = new FdoX5ChainCodec(maxItems: 0))).IsTrue();
     }
 
     private static bool Throws<TException>(Action action)

@@ -30,7 +30,7 @@ public sealed class FdoServiceInfoCodecTests
         var entries = codec.Decode(source);
         Array.Fill(source, (byte)0);
 
-        await Assert.That(entries.Select(entry => entry.Key).SequenceEqual(new[] { "m:x", "m:x", "m:x" })).IsTrue();
+        await Assert.That(entries.Select(entry => entry.Key).SequenceEqual(["m:x", "m:x", "m:x"])).IsTrue();
         await Assert.That(Convert.ToHexString(entries[0].EncodedValue.Span)).IsEqualTo("41FF");
         await Assert.That(Convert.ToHexString(entries[1].EncodedValue.Span)).IsEqualTo("6158");
         await Assert.That(Convert.ToHexString(entries[2].EncodedValue.Span)).IsEqualTo("1800");

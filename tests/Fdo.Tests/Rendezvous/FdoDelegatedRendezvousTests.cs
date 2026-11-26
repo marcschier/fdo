@@ -208,7 +208,7 @@ public sealed class FdoDelegatedRendezvousTests
         using var run = new Fixture();
         using var server = run.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
         using var binding = FdoHttpServerSession.ForRendezvous(server);
-        using var helloBody = new MemoryStream(run.Rendezvous.Codec.EncodeInitial(20, delegated: true).ToArray());
+        await using var helloBody = new MemoryStream(run.Rendezvous.Codec.EncodeInitial(20, delegated: true).ToArray());
         FdoHttpServerResponse hello = await binding.ProcessAsync(new FdoHttpServerRequest
         {
             Method = "POST",
@@ -219,7 +219,7 @@ public sealed class FdoDelegatedRendezvousTests
         });
         binding.ConfirmResponseSent();
         ReadOnlyMemory<byte> nonce = run.Rendezvous.Codec.ReadInitial(21, hello.EncodedBody, true).GuidOrNonce!.Value;
-        using var ownerSignBody = new MemoryStream(run.Rendezvous.Codec.EncodeOwnerSign(
+        await using var ownerSignBody = new MemoryStream(run.Rendezvous.Codec.EncodeOwnerSign(
             run.Rendezvous.EncodeVoucher(), 120, nonce, run.Rendezvous.Address, FdoHashAlgorithm.Sha256, run.Key,
             new FdoX5ChainCodec().Encode([missingPermission
                 ? run.Certificate(FdoDelegateChainVerifier.OnboardReuseCredentialsOid) : run.Leaf])).ToArray());
@@ -701,7 +701,7 @@ public sealed class FdoDelegatedRendezvousTests
             var request = new CertificateRequest("CN=Redirect Delegate", Key, HashAlgorithmName.SHA256);
             request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
             request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
-            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new(permission) }, false));
+            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension([new Oid(permission)], false));
             using X509Certificate2 certificate = request.Create(
                 new X500DistinguishedName("CN=Voucher Owner"),
                 X509SignatureGenerator.CreateForECDsa(Authentication.Voucher.FinalOwner),

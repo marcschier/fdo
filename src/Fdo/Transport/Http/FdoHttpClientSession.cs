@@ -193,6 +193,7 @@ internal sealed class FdoHttpClientSession
     /// Constructs the provisional numeric URI for <paramref name="messageType"/>.
     /// Constructing a URI does not authorize an outbound request.
     /// </summary>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
     public Uri GetMessageUri(ushort messageType)
     {
         var builder = new UriBuilder(_baseAddress)
@@ -336,6 +337,7 @@ internal sealed class FdoHttpClientSession
     /// forbids an Error in answer to an Error.
     /// </exception>
     /// <exception cref="FdoTransportException">The server rejected the request.</exception>
+    /// <exception cref="ArgumentException">An FDO Error message body must not be empty.</exception>
     public async Task SendErrorAsync(ReadOnlyMemory<byte> errorMessage, CancellationToken cancellationToken = default)
     {
         if (Version == FdoProtocolVersion.V20)

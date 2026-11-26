@@ -38,6 +38,15 @@ internal sealed class FdoCoseSignature
     /// Signs with a caller-owned private key. The caller must enforce key-use
     /// policy and construct the COSE envelope. EAT MAROEPrefix is not supported.
     /// </summary>
+    /// <param name="operation">The protocol operation being encoded or verified.</param>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="privateKey">The private key used by the corresponding operation.</param>
+    /// <param name="protectedHeader">The encoded COSE protected headers.</param>
+    /// <param name="payload">The payload of the FDO message.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The COSE signature algorithm is not supported.</exception>
+    /// <exception cref="CryptographicException">
+    /// The signing provider returned a signature of the wrong length.
+    /// </exception>
     public byte[] Sign(
         FdoSignatureOperation operation,
         FdoCoseSignatureAlgorithm algorithm,
@@ -76,6 +85,14 @@ internal sealed class FdoCoseSignature
     /// key provenance, EAT prefix policy, and operation-specific protocol state.
     /// EAT MAROEPrefix is not supported; the caller must require it to be empty.
     /// </summary>
+    /// <param name="operation">The protocol operation being encoded or verified.</param>
+    /// <param name="expectedAlgorithm">The required algorithm for the verified value.</param>
+    /// <param name="publicKey">The public key used in this operation.</param>
+    /// <param name="protectedHeader">The encoded COSE protected headers.</param>
+    /// <param name="payload">The payload of the FDO message.</param>
+    /// <param name="signature">The signature to verify.</param>
+    /// <param name="verifiedPayload">The payload whose signature has been verified.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The COSE signature algorithm is not supported.</exception>
     public bool TryVerify(
         FdoSignatureOperation operation,
         FdoCoseSignatureAlgorithm expectedAlgorithm,

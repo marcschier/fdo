@@ -37,6 +37,12 @@ internal sealed class FdoTo2PairedAeadChannel : IFdoTo2PairedChannel
     /// Both peers must explicitly select this paired nonce profile. The caller
     /// must never construct another session with the same key.
     /// </summary>
+    /// <param name="role">The local protocol role.</param>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="key">The key used by this operation.</param>
+    /// <param name="maxEncodedBytes">The maximum size of the encoded value, in bytes.</param>
+    /// <param name="maxDepth">The maximum permitted CBOR nesting depth.</param>
+    /// <param name="maxItems">The maximum number of CBOR items to process.</param>
     public FdoTo2PairedAeadChannel(
         FdoTo2PairedRole role,
         FdoCoseAeadAlgorithm algorithm,
@@ -76,6 +82,8 @@ internal sealed class FdoTo2PairedAeadChannel : IFdoTo2PairedChannel
     /// Reserves the next local IV and encrypts one CBOR value. The caller must
     /// dispose the channel if delivery fails or its outcome is ambiguous.
     /// </summary>
+    /// <param name="encodedPlaintext">The exact CBOR payload before channel protection.</param>
+    /// <exception cref="InvalidOperationException">The paired TO2 channel is awaiting a message.</exception>
     public ReadOnlyMemory<byte> Seal(ReadOnlyMemory<byte> encodedPlaintext)
     {
         lock (_sync)
@@ -111,6 +119,9 @@ internal sealed class FdoTo2PairedAeadChannel : IFdoTo2PairedChannel
     /// It must also validate the expected TO2 message and its contents before
     /// passing them to ServiceInfo; on failure it must dispose the channel.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="InvalidOperationException">The paired TO2 channel is awaiting a local message.</exception>
+    /// <exception cref="CryptographicException">The paired TO2 message has an unexpected role or counter.</exception>
     public byte[] Open(ReadOnlyMemory<byte> encoded)
     {
         lock (_sync)

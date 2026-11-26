@@ -33,7 +33,10 @@ jobs:
             10.0.404
             11.0.100
       - run: dotnet restore Fdo.slnx
-      - run: dotnet build Fdo.slnx -c Release --no-restore
+      - run: dotnet build Fdo.slnx -c Release --no-restore -p:FdoVerifyDiagnostics=true
+      - name: Check compiler diagnostics, including informational results
+        shell: pwsh
+        run: ./eng/Test-BuildDiagnostics.ps1
       - name: Check formatting and source headers
         if: runner.os == 'Linux'
         shell: pwsh

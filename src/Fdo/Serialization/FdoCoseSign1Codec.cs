@@ -31,6 +31,10 @@ internal sealed class FdoCoseSign1Codec
     /// Produces a tagged COSE_Sign1. The caller must enforce key-use policy
     /// and provide the payload and operation for the intended protocol state.
     /// </summary>
+    /// <param name="operation">The protocol operation being encoded or verified.</param>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="privateKey">The private key used by the corresponding operation.</param>
+    /// <param name="encodedPayload">The exact encoded payload of the message.</param>
     public ReadOnlyMemory<byte> Sign(
         FdoSignatureOperation operation,
         FdoCoseSignatureAlgorithm algorithm,
@@ -60,6 +64,16 @@ internal sealed class FdoCoseSign1Codec
     /// type, the payload semantics, and the expected protocol state and nonce.
     /// EAT signatures requiring a non-empty MAROEPrefix are not supported.
     /// </summary>
+    /// <param name="expectedOperation">The operation to which the signature must be bound.</param>
+    /// <param name="expectedAlgorithm">The required algorithm for the verified value.</param>
+    /// <param name="trustedPublicKey">The trusted public key against which to verify the proof.</param>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// An FDO COSE_Sign1 must contain four fields. An FDO COSE_Sign1 requires tag 18. The COSE unprotected header must
+    /// be a map.
+    /// </exception>
+    /// <exception cref="NotSupportedException">Non-empty COSE unprotected headers are not supported.</exception>
+    /// <exception cref="CryptographicException">The COSE signature did not verify.</exception>
     public ReadOnlyMemory<byte> Verify(
         FdoSignatureOperation expectedOperation,
         FdoCoseSignatureAlgorithm expectedAlgorithm,

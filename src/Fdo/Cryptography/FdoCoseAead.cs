@@ -58,6 +58,16 @@ internal static class FdoCoseAead
     /// Encrypts into separate caller-owned ciphertext and tag buffers. Output
     /// buffers must not overlap each other or any input.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="key">The symmetric key of the selected AEAD algorithm.</param>
+    /// <param name="nonce">The nonce for this exchange.</param>
+    /// <param name="plaintext">The buffer containing or receiving the unprotected payload.</param>
+    /// <param name="ciphertext">The buffer containing or receiving the encrypted payload.</param>
+    /// <param name="tag">The authentication tag to write or verify.</param>
+    /// <param name="associatedData">The additional bytes authenticated but not encrypted.</param>
+    /// <exception cref="ArgumentException">
+    /// The ciphertext and tag must not overlap each other or the inputs.
+    /// </exception>
     public static void Encrypt(
         FdoCoseAeadAlgorithm algorithm,
         ReadOnlySpan<byte> key,
@@ -109,6 +119,14 @@ internal static class FdoCoseAead
     /// The caller must not read the buffer before this method returns. A
     /// cryptographic failure clears the plaintext buffer and is propagated.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="key">The symmetric key of the selected AEAD algorithm.</param>
+    /// <param name="nonce">The nonce for this exchange.</param>
+    /// <param name="ciphertext">The buffer containing or receiving the encrypted payload.</param>
+    /// <param name="tag">The authentication tag to write or verify.</param>
+    /// <param name="plaintext">The buffer containing or receiving the unprotected payload.</param>
+    /// <param name="associatedData">The additional bytes authenticated but not encrypted.</param>
+    /// <exception cref="ArgumentException">The plaintext buffer must not overlap the inputs.</exception>
     public static void Decrypt(
         FdoCoseAeadAlgorithm algorithm,
         ReadOnlySpan<byte> key,

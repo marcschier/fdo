@@ -41,6 +41,11 @@ public static class FdoOwnershipVoucherTransfer
         ExtendCore(encodedZeroEntryVoucher, currentOwnerSigningKey, approvedNewOwnerPublicKey);
 
     /// <summary>Extends a voucher to the approved ECDSA key of a leaf-first DER certificate chain.</summary>
+    /// <param name="encodedVoucher">The exact bytes of the ownership voucher.</param>
+    /// <param name="currentOwnerSigningKey">The private key of the current voucher Owner.</param>
+    /// <param name="approvedNewOwnerCertificates">
+    /// The approved new Owner certificate chain, starting with the leaf.
+    /// </param>
     /// <remarks>
     /// The new voucher entry retains the exact certificates using FDO X5CHAIN.
     /// The caller authorizes the leaf key and any use of attached certificates.

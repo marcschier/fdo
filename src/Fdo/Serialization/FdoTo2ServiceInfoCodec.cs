@@ -31,6 +31,10 @@ internal sealed class FdoTo2ServiceInfoCodec
     /// Reads the provisional 2.0 form with null in the old HMAC field.
     /// The returned values are not authenticated.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// The TO2 setup nonce must contain exactly 16 bytes. The maximum Owner ServiceInfo size must fit in uint16.
+    /// </exception>
     public DeviceServiceInfoReady DecodeDeviceReady(ReadOnlyMemory<byte> encoded)
     {
         var reader = CreateReader(encoded);
@@ -68,6 +72,9 @@ internal sealed class FdoTo2ServiceInfoCodec
     /// <summary>
     /// Writes the provisional 2.0 form with null in the old HMAC field.
     /// </summary>
+    /// <param name="maxOwnerServiceInfoSize">The maximum encoded Owner ServiceInfo body size, in bytes.</param>
+    /// <param name="nonce">The nonce for this exchange.</param>
+    /// <exception cref="ArgumentException">The TO2 setup nonce must contain exactly 16 bytes.</exception>
     public ReadOnlyMemory<byte> EncodeDeviceReady(ushort? maxOwnerServiceInfoSize, ReadOnlyMemory<byte> nonce)
     {
         if (nonce.Length != NonceLength)
@@ -93,6 +100,7 @@ internal sealed class FdoTo2ServiceInfoCodec
     }
 
     /// <summary>Reads the provisional 2.0 Device ServiceInfo plaintext.</summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public DeviceServiceInfo DecodeDevice(ReadOnlyMemory<byte> encoded)
     {
         var reader = CreateReader(encoded);
@@ -105,6 +113,8 @@ internal sealed class FdoTo2ServiceInfoCodec
     }
 
     /// <summary>Writes the provisional 2.0 Device ServiceInfo plaintext.</summary>
+    /// <param name="isMoreServiceInfo">Whether another ServiceInfo round follows.</param>
+    /// <param name="serviceInfo">The ServiceInfo entries carried by the message.</param>
     public ReadOnlyMemory<byte> EncodeDevice(bool isMoreServiceInfo, IReadOnlyList<FdoServiceInfoCodec.Entry> serviceInfo)
     {
         ReadOnlyMemory<byte> encodedServiceInfo = PrepareServiceInfo(serviceInfo);
@@ -118,6 +128,7 @@ internal sealed class FdoTo2ServiceInfoCodec
     }
 
     /// <summary>Reads the Owner ServiceInfo plaintext without applying state rules.</summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public OwnerServiceInfo DecodeOwner(ReadOnlyMemory<byte> encoded)
     {
         var reader = CreateReader(encoded);
@@ -130,6 +141,9 @@ internal sealed class FdoTo2ServiceInfoCodec
     }
 
     /// <summary>Writes the Owner ServiceInfo plaintext without applying state rules.</summary>
+    /// <param name="isMoreServiceInfo">Whether another ServiceInfo round follows.</param>
+    /// <param name="isDone">Whether this round ends the ServiceInfo exchange.</param>
+    /// <param name="serviceInfo">The ServiceInfo entries carried by the message.</param>
     public ReadOnlyMemory<byte> EncodeOwner(
         bool isMoreServiceInfo,
         bool isDone,

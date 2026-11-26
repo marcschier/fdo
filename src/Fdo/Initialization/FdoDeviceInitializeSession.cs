@@ -1,6 +1,7 @@
 // Copyright (c) marcschier. Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -34,6 +35,9 @@ public sealed class FdoDeviceInitializeResponse
     private readonly byte[] _encodedBody;
 
     /// <summary>Snapshots one response received by a Device transport.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
     public FdoDeviceInitializeResponse(
         ushort protocolVersion,
         FdoDeviceInitializeMessageType messageType,
@@ -69,6 +73,10 @@ public sealed class FdoDeviceInitializeResponse
 public interface IFdoDeviceInitializeTransport
 {
     /// <summary>Sends one request and returns the station's response.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoDeviceInitializeResponse> SendAsync(
         ushort protocolVersion,
         FdoDeviceInitializeMessageType messageType,
@@ -92,6 +100,10 @@ public interface IFdoDeviceInitializeHmacSecret
     int KeySizeInBytes { get; }
 
     /// <summary>Computes an HMAC over the supplied encoded header contents.</summary>
+    /// <param name="encodedHeaderContents">
+    /// The encoded voucher header contents, excluding the enclosing byte string.
+    /// </param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<ReadOnlyMemory<byte>> ComputeAsync(
         ReadOnlyMemory<byte> encodedHeaderContents,
         CancellationToken cancellationToken);
@@ -112,15 +124,22 @@ public interface IFdoDeviceInitializeHmacSecret
 public interface IFdoDeviceInitializeHandler
 {
     /// <summary>Authorizes the station, reserves the Device, and returns its secret handle.</summary>
+    /// <param name="runId">The local identifier of the protocol run.</param>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<IFdoDeviceInitializeHmacSecret> AuthorizeAndReserveAsync(
         Guid runId,
         IFdoDeviceInitializeTransport transport,
         CancellationToken cancellationToken);
 
     /// <summary>Durably stages the proposed credential and secret handle.</summary>
+    /// <param name="credential">The Device credential for this operation.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask StageAsync(FdoDeviceInitializeCredential credential, CancellationToken cancellationToken);
 
     /// <summary>Installs the staged credential after a valid DI.Done.</summary>
+    /// <param name="credential">The Device credential for this operation.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask InstallAsync(FdoDeviceInitializeCredential credential, CancellationToken cancellationToken);
 }
 
@@ -154,9 +173,11 @@ public sealed class FdoDeviceInitializeCredential
     public Guid RunId { get; }
 
     /// <summary>Initialized credentials activate FDO.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Part of the persisted credential instance contract.")]
     public bool Active => true;
 
     /// <summary>The FDO protocol version.</summary>
+    [SuppressMessage("Performance", "CA1822", Justification = "Part of the persisted credential instance contract.")]
     public ushort ProtocolVersion => 200;
 
     /// <summary>The manufacturer-supplied Device information string.</summary>
@@ -227,6 +248,7 @@ public sealed class FdoDeviceInitializeSession
     private int _started;
 
     /// <summary>Creates a single-use Device Initialize session.</summary>
+    /// <param name="options">The configuration for this operation.</param>
     public FdoDeviceInitializeSession(FdoDeviceInitializeOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -278,6 +300,16 @@ public sealed class FdoDeviceInitializeSession
     /// Runs once. A successful return follows a valid DI.Done and a successful
     /// installation callback. A failure does not roll back host storage.
     /// </summary>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The Device Initialize session has already been started. The Device initialization handler returned no HMAC
+    /// secret handle.
+    /// </exception>
+    /// <exception cref="CborContentException">The station returned an unrequested vendor capability.</exception>
+    /// <exception cref="CryptographicException">
+    /// The Device and manufacturer key sizes require a different HMAC algorithm.
+    /// </exception>
     public async ValueTask<FdoDeviceInitializeCredential> RunAsync(
         IFdoDeviceInitializeTransport transport,
         CancellationToken cancellationToken = default)

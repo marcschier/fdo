@@ -21,6 +21,7 @@ public sealed class FdoHttpPrivateTrust
     private readonly byte[] _anchor;
 
     /// <summary>Snapshots one nonempty DER-encoded CA certificate, up to 65,535 bytes.</summary>
+    /// <param name="derTrustAnchor">The DER certificate to use as the trust anchor.</param>
     public FdoHttpPrivateTrust(ReadOnlyMemory<byte> derTrustAnchor)
     {
         if (derTrustAnchor.IsEmpty || derTrustAnchor.Length > ushort.MaxValue)
