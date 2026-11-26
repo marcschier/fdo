@@ -102,9 +102,12 @@ internal static class FdoKeyDerivation
             throw new ArgumentException("The shared secret must not be empty.", nameof(sharedSecret));
         }
 
-        int hashLength = hashAlgorithm == HashAlgorithmName.SHA256 ? 32 :
-            hashAlgorithm == HashAlgorithmName.SHA384 ? 48 :
+        if (hashAlgorithm != HashAlgorithmName.SHA256 && hashAlgorithm != HashAlgorithmName.SHA384)
+        {
             throw new ArgumentException("Only HMAC-SHA-256 and HMAC-SHA-384 are supported.", nameof(hashAlgorithm));
+        }
+
+        int hashLength = hashAlgorithm == HashAlgorithmName.SHA256 ? 32 : 48;
         if (destination.IsEmpty || destination.Length > MaxOutputBytes ||
             (destination.Length + hashLength - 1) / hashLength > MaxCounter)
         {

@@ -151,13 +151,14 @@ internal sealed class FdoCsrBase64TextCodec
 
     private static string RequestKeyFor(bool isReenrollment, bool isServerKeyGeneration)
     {
-        if (isReenrollment && isServerKeyGeneration)
+        if (!isServerKeyGeneration)
         {
-            throw new ArgumentException("Server key generation is separate from simple re-enrollment.");
+            return isReenrollment ? ReenrollmentRequestKey : RequestKey;
         }
 
-        return isServerKeyGeneration ? ServerKeygenRequestKey :
-            isReenrollment ? ReenrollmentRequestKey : RequestKey;
+        return !isReenrollment
+            ? ServerKeygenRequestKey
+            : throw new ArgumentException("Server key generation is separate from simple re-enrollment.");
     }
 
     private static void ValidateRequest(ReadOnlyMemory<byte> request, bool isServerKeyGeneration)

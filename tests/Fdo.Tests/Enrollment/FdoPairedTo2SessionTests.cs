@@ -519,7 +519,8 @@ public sealed class FdoPairedTo2SessionTests
         }
         catch (FdoTransportException clientError)
         {
-            await Task.WhenAny(serving, Task.Delay(TimeSpan.FromSeconds(2)));
+            await ((Task)serving).WaitAsync(TimeSpan.FromSeconds(2))
+                .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
             if (!serving.IsCompleted)
             {
                 await timeout.CancelAsync();
@@ -4574,7 +4575,7 @@ public sealed class FdoPairedTo2SessionTests
 
     private static Func<FdoPairedMessage, int, FdoPairedMessage> ResignOwnerProof(
         IReadOnlyList<ReadOnlyMemory<byte>> chain, ECDsa signer) =>
-        (message, count) =>
+        (message, _) =>
         {
             if (message.Type != 83)
             {

@@ -164,13 +164,14 @@ public sealed class FdoRendezvousServerSession : IDisposable
 
             RequireBodySize(encodedBody);
             byte[] body = encodedBody.ToArray();
-            FdoRendezvousResponse response = _phase == Phase.Pages
-                ? await ProcessRvMoreAsync(body, cancellationToken).ConfigureAwait(false)
-                : _phase == Phase.Hello
-                ? await ProcessHelloAsync(body, cancellationToken).ConfigureAwait(false)
-                : Protocol == FdoRendezvousProtocol.OwnerRegistration
-                    ? await ProcessOwnerSignAsync(body, observedSource, cancellationToken).ConfigureAwait(false)
-                    : await ProcessDeviceProofAsync(body, cancellationToken).ConfigureAwait(false);
+            FdoRendezvousResponse response = _phase switch
+            {
+                Phase.Pages => await ProcessRvMoreAsync(body, cancellationToken).ConfigureAwait(false),
+                Phase.Hello => await ProcessHelloAsync(body, cancellationToken).ConfigureAwait(false),
+                _ when Protocol == FdoRendezvousProtocol.OwnerRegistration =>
+                    await ProcessOwnerSignAsync(body, observedSource, cancellationToken).ConfigureAwait(false),
+                _ => await ProcessDeviceProofAsync(body, cancellationToken).ConfigureAwait(false)
+            };
             cancellationToken.ThrowIfCancellationRequested();
             RequireBodySize(response.EncodedBody);
             _pendingResponse = response.MessageType;

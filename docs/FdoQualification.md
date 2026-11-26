@@ -53,6 +53,13 @@ Linux managed evidence only.
 
 ## NativeAOT test evidence
 
+Hosted [validation of `9bab6e0`][infrastructure-ci] ran the NativeAOT
+smoke executable on macOS 15 arm64 with dynamic code disabled on .NET
+10.0.15 and 11.0.0. Each target completed six paired enrollments,
+including both CTR and both CBC cases and delegated replacement, and
+correctly rejected both unsupported DH cases before TO2. This does not
+qualify DH, CCM, private TLS, or independent interoperability on macOS.
+
 Clean `276947d` passed all ten Linux x64 NativeAOT enrollment scenarios
 per target, including the two Linux DH cases and `delegated-replacement`.
 Linux native runs used Debian 12 and OpenSSL 3.0.20. Windows x64 passed
@@ -118,12 +125,9 @@ Configure each policy separately.
   and SEVK, not message bytes or external protocol execution.
 - Paired DH at the exact required exponent widths is implemented on
   Linux/OpenSSL. Do not infer Windows or macOS DH support from provider
-  availability. macOS DH and CCM are unsupported; the public CommonCrypto
-  CTR path has not run on macOS. The deferred manual arm64 macOS job was
-  prepared and parsed locally only; it has not been installed or run. It
-  requires `macos-15` arm64, the .NET 10 and 11 SDK toolchains, and public
-  Apple developer tools. It selects CTR vectors and the supported-platform
-  NativeAOT scenario matrix, including delegated replacement.
+  availability. macOS DH and CCM are unsupported. The hosted macOS
+  arm64 NativeAOT lane exercised the public CommonCrypto CTR path in
+  paired enrollment on both targets.
 - Public FDO 2.0 candidate peers include
   [fido-device-onboard/go-fdo#285][go] at `930d18f414353903e8e9b847cb2cf3d37e0497ce`
   and its UEFI/Rust siblings. They share a vendor lineage. The
@@ -180,3 +184,4 @@ Configure each policy separately.
 
 [go]: https://github.com/fido-device-onboard/go-fdo/pull/285
 [go-ecdh-vectors]: https://github.com/bkgoodman/go-fdo/blob/930d18f414353903e8e9b847cb2cf3d37e0497ce/kex/ecdh_kat_test.go
+[infrastructure-ci]: https://github.com/marcschier/fdo/actions/runs/45824795337

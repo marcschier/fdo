@@ -291,7 +291,10 @@ public sealed class FdoDelegateChainVerifierTests
                 specs[2] = specs[2] with { UnknownCritical = true };
                 break;
             case "critical-policies":
-                specs[1] = specs[1] with { Extra = new[] { Raw("2.5.29.32", true, 0x30, 0x00) } };
+                specs[1] = specs[1] with
+                {
+                    Extra = [Raw("2.5.29.32", true, 0x30, 0x08, 0x30, 0x06, 0x06, 0x04, 0x2A, 0x03, 0x04, 0x05)]
+                };
                 break;
             case "duplicate-subject":
                 specs[1] = specs[1] with { Name = specs[0].Name };

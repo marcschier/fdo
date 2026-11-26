@@ -258,7 +258,7 @@ public sealed class FdoHttpRendezvousStepTests
             plan, () => throw new InvalidOperationException(), _ => throw new InvalidOperationException());
 
         await Assert.That(declined.Reported).IsEqualTo(FdoRendezvousAttemptResult.Declined);
-        await Assert.That(authorized[1].AbsoluteUri).IsEqualTo($"https://127.0.0.2:{closed}/");
+        await Assert.That(authorized[1].AbsoluteUri).IsEqualTo($"https://127.0.0.1:{closed}/");
         await Assert.That(uncertain.Reported).IsEqualTo(FdoRendezvousAttemptResult.Uncertain);
         await Assert.That(uncertain.Error).IsNotNull();
         await Assert.That(uncertain.HasValue).IsFalse();
@@ -276,7 +276,7 @@ public sealed class FdoHttpRendezvousStepTests
     {
         using var authentication = new AuthenticationFixture();
         var fixture = new RendezvousFixture(authentication);
-        var silent = new TcpListener(IPAddress.Parse("127.0.0.2"), 0);
+        var silent = new TcpListener(IPAddress.Loopback, 0);
         silent.Start();
         try
         {
@@ -337,7 +337,7 @@ public sealed class FdoHttpRendezvousStepTests
 
     private static FdoRendezvousAttemptPlan OwnerPlan(int port) => new(
         FdoRendezvousInfo.ParseDirectives(
-            Info([Dns("rvserver.local")], [Ip([127, 0, 0, 2]), Unsigned(4, (ulong)port)]),
+            Info([Dns("rvserver.local")], [Ip([127, 0, 0, 1]), Unsigned(4, (ulong)port)]),
             FdoRendezvousProtocol.OwnerRegistration),
         new FdoRendezvousAttemptPlanOptions { MaxAttempts = 10, Deadline = DateTimeOffset.MaxValue });
 

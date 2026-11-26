@@ -41,10 +41,15 @@ internal static class FdoTo2PairedChannels
         ReadOnlySpan<byte> sessionKey,
         int maxEncodedBytes = ushort.MaxValue,
         int maxDepth = 32,
-        int maxItems = ushort.MaxValue) =>
-        FdoTo2CipherSuites.IsAesCbc(suite)
-            ? new FdoTo2PairedCbcEtmChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems)
-            : FdoTo2CipherSuites.IsAesCtr(suite)
+        int maxItems = ushort.MaxValue)
+    {
+        if (FdoTo2CipherSuites.IsAesCbc(suite))
+        {
+            return new FdoTo2PairedCbcEtmChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems);
+        }
+
+        return FdoTo2CipherSuites.IsAesCtr(suite)
             ? new FdoTo2PairedEtmChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems)
             : new FdoTo2PairedAeadChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems);
+    }
 }

@@ -56,10 +56,17 @@ public sealed class FdoHttpServerRequest
         init => _observedSource = CopyAddress(value);
     }
 
-    private static IPAddress? CopyAddress(IPAddress? address) => address is null ? null :
-        address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+    private static IPAddress? CopyAddress(IPAddress? address)
+    {
+        if (address is null)
+        {
+            return null;
+        }
+
+        return address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
             ? new IPAddress(address.GetAddressBytes(), address.ScopeId)
             : new IPAddress(address.GetAddressBytes());
+    }
 }
 
 /// <summary>A detached HTTP response for one paired FDO request.</summary>

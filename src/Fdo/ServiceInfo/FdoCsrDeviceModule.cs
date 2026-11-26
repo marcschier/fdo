@@ -303,8 +303,12 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
             return Array.Empty<Entry>();
         }
 
-        string responseName = _isServerKeyGeneration ? "serverkeygen-res" :
-            _isReenrollment ? "simplereenroll-res" : "simpleenroll-res";
+        string responseName = (_isServerKeyGeneration, _isReenrollment) switch
+        {
+            (true, _) => "serverkeygen-res",
+            (_, true) => "simplereenroll-res",
+            _ => "simpleenroll-res"
+        };
         if (_state == State.AwaitingResponse &&
             string.Equals(messageName, responseName, StringComparison.Ordinal))
         {

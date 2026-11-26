@@ -33,10 +33,15 @@ internal static class FdoTo2CipherSuites
         _ = FdoCoseAead.GetParameters(suite);
     }
 
-    public static bool IsSupported(FdoCoseAeadAlgorithm suite) =>
-        IsAesCtr(suite) ? FdoAesCtr.IsSupported :
-        IsAesCbc(suite) ? FdoAesCbc.IsSupported :
-        FdoCoseAead.IsSupported(suite);
+    public static bool IsSupported(FdoCoseAeadAlgorithm suite)
+    {
+        if (IsAesCtr(suite))
+        {
+            return FdoAesCtr.IsSupported;
+        }
+
+        return IsAesCbc(suite) ? FdoAesCbc.IsSupported : FdoCoseAead.IsSupported(suite);
+    }
 
     /// <summary>
     /// Returns the encrypt-then-MAC parameters. The SVK lengths follow FDO 2.0

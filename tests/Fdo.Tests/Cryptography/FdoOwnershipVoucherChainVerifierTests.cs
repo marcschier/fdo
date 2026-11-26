@@ -81,6 +81,7 @@ public sealed class FdoOwnershipVoucherChainVerifierTests
         int calls = 0;
         async ValueTask<ReadOnlyMemory<byte>> Compute(ReadOnlyMemory<byte> header, CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
             calls++;
             await Task.Yield();
             return FdoHashValue.ComputeHmac(fixture.HmacAlgorithm, fixture.Secret, header.Span).Value;
