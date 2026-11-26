@@ -433,9 +433,10 @@ starting a new session.
 ## Framework target
 
 The library targets `net10.0` and `net11.0`. Managed and NativeAOT runs cover
-selected paths on Windows x64 and Linux x64. Windows rejects paired
-finite-field DH; the exact-width DH cases run on Linux with OpenSSL 3.
-macOS execution remains unverified. Read the
+selected paths on Windows x64 and Linux x64. Hosted NativeAOT runs also
+cover selected paired paths on macOS arm64, including CTR. Windows and
+macOS reject paired finite-field DH; the exact-width DH cases run on
+Linux with OpenSSL 3. Read the
 [qualification notes](FdoQualification.md) before choosing a platform
 or suite. A paired run doesn't establish independent interoperability,
 provider isolation, or end-to-end timing behavior.

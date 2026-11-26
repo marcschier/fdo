@@ -31,6 +31,6 @@ candidate would not establish FDO Base Profile conformance.
 The first isolated run with this pin reached the Go HTTP server, but the
 .NET Device rejected the DI exchange with `CborContentException` before
 staging the credential or sending `DI.SetHMAC`. The same failure occurred
-in the [hosted repeat](https://github.com/marcschier/fdo/actions/runs/45824795305).
+in the [hosted repeat](https://github.com/marcschier/fdo/actions/runs/45825454876).
 TO1 and TO2 did not run.
 This result does not test the two implementations' protected IV policies.

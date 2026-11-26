@@ -53,12 +53,19 @@ Linux managed evidence only.
 
 ## NativeAOT test evidence
 
-Hosted [validation of `9bab6e0`][infrastructure-ci] ran the NativeAOT
-smoke executable on macOS 15 arm64 with dynamic code disabled on .NET
-10.0.15 and 11.0.0. Each target completed six paired enrollments,
-including both CTR and both CBC cases and delegated replacement, and
-correctly rejected both unsupported DH cases before TO2. This does not
-qualify DH, CCM, private TLS, or independent interoperability on macOS.
+Hosted [validation of `16c99ea`][infrastructure-ci] ran the NativeAOT
+smoke executable on Linux x64, Windows x64, and macOS 15 arm64 with
+dynamic code disabled on .NET 10.0.15 and 11.0.0. On each target Linux
+completed nine paired scenarios; Windows and macOS each completed six
+paired enrollments and correctly rejected both unsupported DH cases
+before TO2. The macOS enrollments include both CTR and both CBC cases
+and delegated replacement. This does not qualify DH, CCM, private TLS,
+or independent interoperability on macOS.
+
+The same run passed 1,625 managed tests per target on Linux and 1,618
+per target on Windows and macOS, with seven Linux-only HTTPS tests
+skipped on each of the latter platforms. Both new samples ran on all
+three platforms and both targets.
 
 Clean `276947d` passed all ten Linux x64 NativeAOT enrollment scenarios
 per target, including the two Linux DH cases and `delegated-replacement`.
@@ -184,4 +191,4 @@ Configure each policy separately.
 
 [go]: https://github.com/fido-device-onboard/go-fdo/pull/285
 [go-ecdh-vectors]: https://github.com/bkgoodman/go-fdo/blob/930d18f414353903e8e9b847cb2cf3d37e0497ce/kex/ecdh_kat_test.go
-[infrastructure-ci]: https://github.com/marcschier/fdo/actions/runs/45824795337
+[infrastructure-ci]: https://github.com/marcschier/fdo/actions/runs/45825454836
