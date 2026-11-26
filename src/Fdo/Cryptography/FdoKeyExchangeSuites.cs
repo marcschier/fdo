@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
@@ -6,12 +8,12 @@ namespace Fdo.Cryptography;
 
 internal enum FdoKeyExchangeSuite
 {
-    Ecdh256,
-    Ecdh384,
-    DhkexId14,
-    DhkexId15,
-    Asymkex2048,
-    Asymkex3072,
+    Ecdh256 = 0,
+    Ecdh384 = 1,
+    DhkexId14 = 2,
+    DhkexId15 = 3,
+    Asymkex2048 = 4,
+    Asymkex3072 = 5,
 }
 
 internal interface IFdoPairedKeyExchange : IDisposable

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -21,6 +23,7 @@ internal static class FdoTo2CipherSuites
     public static bool IsEncryptThenMac(FdoCoseAeadAlgorithm suite) => IsAesCtr(suite) || IsAesCbc(suite);
 
     /// <summary>Throws when the suite is not one of the paired TO2 suites.</summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
     public static void Validate(FdoCoseAeadAlgorithm suite)
     {
         if (IsEncryptThenMac(suite))
@@ -31,15 +34,22 @@ internal static class FdoTo2CipherSuites
         _ = FdoCoseAead.GetParameters(suite);
     }
 
-    public static bool IsSupported(FdoCoseAeadAlgorithm suite) =>
-        IsAesCtr(suite) ? FdoAesCtr.IsSupported :
-        IsAesCbc(suite) ? FdoAesCbc.IsSupported :
-        FdoCoseAead.IsSupported(suite);
+    public static bool IsSupported(FdoCoseAeadAlgorithm suite)
+    {
+        if (IsAesCtr(suite))
+        {
+            return FdoAesCtr.IsSupported;
+        }
+
+        return IsAesCbc(suite) ? FdoAesCbc.IsSupported : FdoCoseAead.IsSupported(suite);
+    }
 
     /// <summary>
     /// Returns the encrypt-then-MAC parameters. The SVK lengths follow FDO 2.0
     /// (256 and 512 bits), which differ from the RFC 9053 HMAC 384/384 key size.
     /// </summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The suite is not an encrypt-then-MAC suite.</exception>
     public static EncryptThenMacParameters GetEncryptThenMacParameters(FdoCoseAeadAlgorithm suite) => suite switch
     {
         FdoCoseAeadAlgorithm.AesCtr128HmacSha256 or FdoCoseAeadAlgorithm.AesCbc128HmacSha256 =>
@@ -50,6 +60,7 @@ internal static class FdoTo2CipherSuites
     };
 
     /// <summary>Returns the total session key length that the KDF must produce.</summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
     public static int GetSessionKeyLength(FdoCoseAeadAlgorithm suite)
     {
         if (IsEncryptThenMac(suite))
@@ -62,6 +73,7 @@ internal static class FdoTo2CipherSuites
     }
 
     /// <summary>Returns the KDF PRF for the suite.</summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
     public static HashAlgorithmName GetKdfHash(FdoCoseAeadAlgorithm suite) =>
         IsEncryptThenMac(suite) ? GetEncryptThenMacParameters(suite).Hash : HashAlgorithmName.SHA256;
 

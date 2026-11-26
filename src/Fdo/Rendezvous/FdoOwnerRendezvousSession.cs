@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -89,6 +91,7 @@ public sealed class FdoOwnerRendezvousSession
     internal bool IsStarted => Volatile.Read(ref _started) != 0;
 
     /// <summary>Snapshots and verifies the voucher and configured trust material.</summary>
+    /// <param name="options">The configuration for this operation.</param>
     public FdoOwnerRendezvousSession(FdoOwnerRendezvousOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -170,6 +173,12 @@ public sealed class FdoOwnerRendezvousSession
     /// Registers once and returns the server's accepted lifetime in seconds.
     /// A transport failure may leave a registration in the server's store.
     /// </summary>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">The Owner rendezvous session has already been started.</exception>
+    /// <exception cref="NotSupportedException">
+    /// The Rendezvous Server did not select the requested TO0 capability.
+    /// </exception>
     public async ValueTask<uint> RunAsync(
         IFdoRendezvousTransport transport,
         CancellationToken cancellationToken = default)

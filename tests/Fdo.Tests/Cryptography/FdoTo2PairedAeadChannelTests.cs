@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -71,7 +73,7 @@ public sealed class FdoTo2PairedAeadChannelTests
     [Test]
     public async Task RejectsReplaysAndReflectedMessagesBeforeReturningPlaintext()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -99,7 +101,7 @@ public sealed class FdoTo2PairedAeadChannelTests
     [Test]
     public async Task RejectsSkippedCountersAndTagFailuresAndClosesTheChannel()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -124,7 +126,7 @@ public sealed class FdoTo2PairedAeadChannelTests
     [Test]
     public async Task AFailedEncryptionCannotReuseTheReservedNonce()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -138,7 +140,7 @@ public sealed class FdoTo2PairedAeadChannelTests
     [Test]
     public async Task EnforcesSingleInFlightAlternatingMessages()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -172,11 +174,12 @@ public sealed class FdoTo2PairedAeadChannelTests
     public async Task RequiresAnExplicitSupportedSuiteAndKeySize()
     {
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoTo2PairedAeadChannel((FdoTo2PairedRole)2, FdoCoseAeadAlgorithm.A128Gcm, new byte[16]))).IsTrue();
+            _ = new FdoTo2PairedAeadChannel((FdoTo2PairedRole)2, FdoCoseAeadAlgorithm.A128Gcm, new byte[16]))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoTo2PairedAeadChannel(FdoTo2PairedRole.Device, (FdoCoseAeadAlgorithm)2, new byte[16]))).IsTrue();
+            _ = new FdoTo2PairedAeadChannel(FdoTo2PairedRole.Device, (FdoCoseAeadAlgorithm)2, new byte[16]))).IsTrue();
         await Assert.That(Throws<ArgumentException>(() =>
-            new FdoTo2PairedAeadChannel(FdoTo2PairedRole.Device, FdoCoseAeadAlgorithm.A128Gcm, new byte[32]))).IsTrue();
+            _ = new FdoTo2PairedAeadChannel(
+                FdoTo2PairedRole.Device, FdoCoseAeadAlgorithm.A128Gcm, new byte[32]))).IsTrue();
     }
 
     [Test]
@@ -191,7 +194,7 @@ public sealed class FdoTo2PairedAeadChannelTests
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             await Assert.That(Throws<PlatformNotSupportedException>(() =>
-                new FdoTo2PairedAeadChannel(FdoTo2PairedRole.Device, algorithm, new byte[keyLength]))).IsTrue();
+                _ = new FdoTo2PairedAeadChannel(FdoTo2PairedRole.Device, algorithm, new byte[keyLength]))).IsTrue();
             return;
         }
 

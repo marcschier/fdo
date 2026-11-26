@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
@@ -141,7 +143,7 @@ public sealed class FdoRendezvousAttemptPlanTests
         FdoRendezvousDirectiveSet set = FdoRendezvousInfo.ParseDirectives(
             Info([Dns("rvserver.local")]), FdoRendezvousProtocol.DeviceLookup);
 
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoRendezvousAttemptPlan(set, new()
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoRendezvousAttemptPlan(set, new()
         {
             MaxAttempts = maxAttempts,
             Deadline = DateTimeOffset.MaxValue,

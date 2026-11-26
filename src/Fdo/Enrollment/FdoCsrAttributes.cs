@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -17,9 +19,9 @@ namespace Fdo.Enrollment;
 public sealed class FdoCsrAttributes
 {
     private readonly byte[] _encoded;
-    private readonly IReadOnlyList<FdoCsrAttribute> _entries;
 
     /// <summary>Snapshots one DER CsrAttrs sequence, including an empty sequence.</summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
     public FdoCsrAttributes(ReadOnlyMemory<byte> encoded)
     {
         if (encoded.IsEmpty || encoded.Length > ushort.MaxValue)
@@ -68,7 +70,7 @@ public sealed class FdoCsrAttributes
             }
 
             reader.ThrowIfNotEmpty();
-            _entries = entries.AsReadOnly();
+            Entries = entries.AsReadOnly();
         }
         catch (AsnContentException exception)
         {
@@ -80,7 +82,7 @@ public sealed class FdoCsrAttributes
     public ReadOnlyMemory<byte> EncodedValue => (byte[])_encoded.Clone();
 
     /// <summary>The OID and Attribute choices in their original order.</summary>
-    public IReadOnlyList<FdoCsrAttribute> Entries => _entries;
+    public IReadOnlyList<FdoCsrAttribute> Entries { get; }
 
     internal ReadOnlyMemory<byte> EncodedData => _encoded;
 }

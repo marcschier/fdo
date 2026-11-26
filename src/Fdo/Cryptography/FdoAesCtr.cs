@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Buffers.Binary;
 using System.Runtime.InteropServices;
@@ -115,6 +117,10 @@ internal static partial class FdoAesCtr
     /// the key. The caller commits <paramref name="followingCounter"/> only after
     /// the message has been processed successfully.
     /// </summary>
+    /// <param name="nextCounter">The counter value to use for the next operation.</param>
+    /// <param name="length">The length of the value in bytes.</param>
+    /// <param name="initialCounter">The initial counter value for encryption or decryption.</param>
+    /// <param name="followingCounter">The counter immediately after the reserved blocks.</param>
     public static bool TryReserve(ulong nextCounter, int length, out uint initialCounter, out ulong followingCounter)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(length);

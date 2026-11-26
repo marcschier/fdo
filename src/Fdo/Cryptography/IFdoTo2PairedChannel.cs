@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 
@@ -13,12 +15,14 @@ internal interface IFdoTo2PairedChannel : IDisposable
     /// Protects one CBOR value. The caller must dispose the channel if delivery
     /// fails or its outcome is ambiguous.
     /// </summary>
+    /// <param name="encodedPlaintext">The exact CBOR payload before channel protection.</param>
     ReadOnlyMemory<byte> Seal(ReadOnlyMemory<byte> encodedPlaintext);
 
     /// <summary>
     /// Returns the exact protected length that <see cref="Seal"/> produces for
     /// a plaintext of the given length, without consuming channel state.
     /// </summary>
+    /// <param name="plaintextLength">The plaintext length in bytes.</param>
     long GetSealedLength(int plaintextLength);
 
     /// <summary>
@@ -39,10 +43,15 @@ internal static class FdoTo2PairedChannels
         ReadOnlySpan<byte> sessionKey,
         int maxEncodedBytes = ushort.MaxValue,
         int maxDepth = 32,
-        int maxItems = ushort.MaxValue) =>
-        FdoTo2CipherSuites.IsAesCbc(suite)
-            ? new FdoTo2PairedCbcEtmChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems)
-            : FdoTo2CipherSuites.IsAesCtr(suite)
+        int maxItems = ushort.MaxValue)
+    {
+        if (FdoTo2CipherSuites.IsAesCbc(suite))
+        {
+            return new FdoTo2PairedCbcEtmChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems);
+        }
+
+        return FdoTo2CipherSuites.IsAesCtr(suite)
             ? new FdoTo2PairedEtmChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems)
             : new FdoTo2PairedAeadChannel(role, suite, sessionKey, maxEncodedBytes, maxDepth, maxItems);
+    }
 }

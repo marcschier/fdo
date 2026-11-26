@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Linq;
@@ -42,7 +44,7 @@ public sealed class FdoTo2ServiceInfoCodecTests
         ReadOnlyMemory<byte> encoded = codec.EncodeDevice(decoded.IsMoreServiceInfo, decoded.ServiceInfo);
 
         await Assert.That(decoded.IsMoreServiceInfo).IsTrue();
-        await Assert.That(decoded.ServiceInfo.Select(entry => entry.Key).SequenceEqual(new[] { "m:x", "m:x" })).IsTrue();
+        await Assert.That(decoded.ServiceInfo.Select(entry => entry.Key).SequenceEqual(["m:x", "m:x"])).IsTrue();
         await Assert.That(Convert.ToHexString(decoded.ServiceInfo[0].EncodedValue.Span)).IsEqualTo("1800");
         await Assert.That(Convert.ToHexString(decoded.ServiceInfo[1].EncodedValue.Span)).IsEqualTo("41FF");
         await Assert.That(Convert.ToHexString(encoded.Span)).IsEqualTo(wire);

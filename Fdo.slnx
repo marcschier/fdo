@@ -1,4 +1,8 @@
 <Solution>
   <Project Path="src/Fdo/Fdo.csproj" />
   <Project Path="tests/Fdo.Tests/Fdo.Tests.csproj" />
+  <Project Path="tests/Fdo.AotSmoke/Fdo.AotSmoke.csproj" />
+  <Project Path="samples/Fdo.InProcess/Fdo.InProcess.csproj" />
+  <Project Path="samples/Fdo.HttpLoopback/Fdo.HttpLoopback.csproj" />
+  <Project Path="interop/Fdo.PeerProbe/Fdo.PeerProbe.csproj" />
 </Solution>

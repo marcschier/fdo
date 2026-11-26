@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +16,10 @@ namespace Fdo.Enrollment;
 public interface IFdoDeviceTransport
 {
     /// <summary>Sends one request and returns the Owner's response.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoOwnerResponse> SendAsync(
         ushort protocolVersion,
         FdoTo2MessageType messageType,

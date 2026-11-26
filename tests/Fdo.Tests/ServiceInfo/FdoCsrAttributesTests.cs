@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Asn1;
 using System.Linq;
@@ -32,7 +34,7 @@ public sealed class FdoCsrAttributesTests
             "1.2.840.10045.4.3.3",
         ])).IsTrue();
         await Assert.That(attributes.Entries.Select(item => item.IsAttribute)
-            .SequenceEqual(new[] { false, true, true, false })).IsTrue();
+            .SequenceEqual([false, true, true, false])).IsTrue();
         await Assert.That(attributes.Entries[0].Values.Count).IsEqualTo(0);
         await Assert.That(attributes.Entries[1].Values.Count).IsEqualTo(1);
         await Assert.That(Convert.ToHexString(attributes.Entries[1].Values[0].Span))
@@ -47,7 +49,7 @@ public sealed class FdoCsrAttributesTests
         var empty = new FdoCsrAttributes(new byte[] { 0x30, 0x00 });
         byte[] encoded = Convert.FromHexString("300C06022A03300606022A043100");
         // The Attribute SET must contain a value, including for an unknown type.
-        await Assert.That(Throws<CryptographicException>(() => new FdoCsrAttributes(encoded))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() => _ = new FdoCsrAttributes(encoded))).IsTrue();
 
         encoded = Convert.FromHexString("300E06022A03300806022A0431020500");
         byte[] original = (byte[])encoded.Clone();
@@ -77,14 +79,14 @@ public sealed class FdoCsrAttributesTests
     public async Task RejectsMalformedOrNonDerAttributeStructures(string hex)
     {
         byte[] encoded = Convert.FromHexString(hex);
-        await Assert.That(Throws<CryptographicException>(() => new FdoCsrAttributes(encoded))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() => _ = new FdoCsrAttributes(encoded))).IsTrue();
     }
 
     [Test]
     public async Task RejectsUnsortedAttributeValues()
     {
         byte[] unsorted = Convert.FromHexString("300E300C06022A033106020102020101");
-        await Assert.That(Throws<CryptographicException>(() => new FdoCsrAttributes(unsorted))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() => _ = new FdoCsrAttributes(unsorted))).IsTrue();
     }
 
     [Test]
@@ -109,7 +111,7 @@ public sealed class FdoCsrAttributesTests
         await Assert.That(atLimit.Length).IsEqualTo((int)ushort.MaxValue);
         await Assert.That(new FdoCsrAttributes(atLimit).EncodedValue.Length).IsEqualTo((int)ushort.MaxValue);
         await Assert.That(overLimit.Length).IsEqualTo(ushort.MaxValue + 1);
-        await Assert.That(Throws<CryptographicException>(() => new FdoCsrAttributes(overLimit))).IsTrue();
+        await Assert.That(Throws<CryptographicException>(() => _ = new FdoCsrAttributes(overLimit))).IsTrue();
     }
 
     private static byte[] AttributesWithOctets(int length)

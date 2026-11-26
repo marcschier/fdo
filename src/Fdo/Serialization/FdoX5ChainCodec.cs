@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -25,6 +27,10 @@ internal sealed class FdoX5ChainCodec
     /// Returns certificate byte-string contents in wire order, backed by an
     /// owned copy of the input.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// An x5chain array must contain at least two certificates. An x5chain array must have a definite length.
+    /// </exception>
     public IReadOnlyList<ReadOnlyMemory<byte>> Decode(ReadOnlyMemory<byte> encoded)
     {
         ReadOnlyMemory<byte> copy = _cbor.ValidateAndCopy(encoded);
@@ -58,6 +64,11 @@ internal sealed class FdoX5ChainCodec
     /// Writes one certificate as a byte string or multiple certificates as an
     /// array of byte strings, retaining their supplied order.
     /// </summary>
+    /// <param name="certificates">The ordered certificates to process.</param>
+    /// <exception cref="ArgumentException">An x5chain must contain at least one certificate.</exception>
+    /// <exception cref="CborContentException">
+    /// The x5chain exceeds the encoded byte limit. The x5chain exceeds the item or byte limit.
+    /// </exception>
     public ReadOnlyMemory<byte> Encode(IReadOnlyList<ReadOnlyMemory<byte>> certificates)
     {
         ArgumentNullException.ThrowIfNull(certificates);

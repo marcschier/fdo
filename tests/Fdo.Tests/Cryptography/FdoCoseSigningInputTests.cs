@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,10 +10,12 @@ namespace Fdo.Tests.Cryptography;
 
 public sealed class FdoCoseSigningInputTests
 {
-    // CBOR text string "Signature1" (RFC 9052 section 4.4) preceded by a four-element array header.
+    /// <summary>
+    /// CBOR text string "Signature1" (RFC 9052 section 4.4) preceded by a four-element array header.
+    /// </summary>
     private const string Sign1Prefix = "846A5369676E617475726531";
-    private const string To0OwnerSignAadField = "568174" + "46444F2D544F302D4F776E65725369676E2D7631";
-    private const string OvEntryAad = "816E" + "46444F2D4F56456E7472792D7631";
+    private const string To0OwnerSignAadField = "56817446444F2D544F302D4F776E65725369676E2D7631";
+    private const string OvEntryAad = "816E46444F2D4F56456E7472792D7631";
 
     [Test]
     [Arguments(0, "FDO-TO0-OwnerSign-v1")]
@@ -124,13 +128,13 @@ public sealed class FdoCoseSigningInputTests
             FdoSignatureOperation.OVEntry, ReadOnlySpan<byte>.Empty, ReadOnlySpan<byte>.Empty);
 
         await Assert.That(Convert.ToHexString(second)).IsEqualTo(OvEntryAad);
-        await Assert.That(Convert.ToHexString(secondInput)).IsEqualTo(Sign1Prefix + "40" + "50" + OvEntryAad + "40");
+        await Assert.That(Convert.ToHexString(secondInput)).IsEqualTo(Sign1Prefix + "4050" + OvEntryAad + "40");
     }
 
     [Test]
     public async Task UndefinedOperationsAreRejected()
     {
-        var undefined = (FdoSignatureOperation)99;
+        const FdoSignatureOperation undefined = (FdoSignatureOperation)99;
 
         await Assert.That(Throws<ArgumentOutOfRangeException>(() => FdoCoseSigningInput.GetDomainTag(undefined))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(() => FdoCoseSigningInput.EncodeExternalAad(undefined))).IsTrue();

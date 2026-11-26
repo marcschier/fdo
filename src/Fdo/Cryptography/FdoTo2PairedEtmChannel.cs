@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Buffers.Binary;
 using System.Runtime.Versioning;
@@ -38,6 +40,12 @@ internal sealed class FdoTo2PairedEtmChannel : IFdoTo2PairedChannel
     /// as SVK followed by SEK. Both peers must explicitly select this suite. The
     /// caller must never construct another session with the same key.
     /// </summary>
+    /// <param name="role">The local protocol role.</param>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="sessionKey">The negotiated key material for the protected channel.</param>
+    /// <param name="maxEncodedBytes">The maximum size of the encoded value, in bytes.</param>
+    /// <param name="maxDepth">The maximum permitted CBOR nesting depth.</param>
+    /// <param name="maxItems">The maximum number of CBOR items to process.</param>
     public FdoTo2PairedEtmChannel(
         FdoTo2PairedRole role,
         FdoCoseAeadAlgorithm suite,

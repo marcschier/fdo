@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -91,6 +93,9 @@ internal sealed class FdoDeviceInitializeCodec
     /// Computes the provisionally selected DI HMAC over OVHeader contents.
     /// The caller must validate the header and protect the device secret.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="deviceHmacSecret">The Device's voucher HMAC key.</param>
+    /// <param name="credentials">The credential data retained by the Device or its host.</param>
     public FdoHashValue ComputeSetHmac(
         FdoHashAlgorithm algorithm,
         ReadOnlySpan<byte> deviceHmacSecret,
@@ -190,12 +195,18 @@ internal sealed class FdoDeviceInitializeCodec
     /// An absent manufacturing value is null. A present value is one encoded
     /// CBOR item without its surrounding byte string.
     /// </summary>
+    /// <param name="CapabilityFlags">The encoded protocol capability bits.</param>
+    /// <param name="VendorCapabilities">The vendor capability names carried by the message.</param>
+    /// <param name="EncodedDeviceMfgInfo">The encoded manufacturing lookup metadata.</param>
     public sealed record AppStart(
         ReadOnlyMemory<byte> CapabilityFlags,
         IReadOnlyList<string> VendorCapabilities,
         ReadOnlyMemory<byte>? EncodedDeviceMfgInfo);
 
     /// <summary>An unverified voucher header, including its byte-string wrapper.</summary>
+    /// <param name="CapabilityFlags">The encoded protocol capability bits.</param>
+    /// <param name="VendorCapabilities">The vendor capability names carried by the message.</param>
+    /// <param name="EncodedHeaderTag">The exact voucher header, including its CBOR byte-string wrapper.</param>
     public sealed record SetCredentials(
         ReadOnlyMemory<byte> CapabilityFlags,
         IReadOnlyList<string> VendorCapabilities,

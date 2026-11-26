@@ -10,7 +10,8 @@ storage, and recovery.
 Start with [role and transport coverage](#role-and-transport-coverage) for
 the current behavior. The [requirements audit](FdoBaseProfileAudit.md)
 records the gaps at `770f9d6`. Treat limits in a checkpoint row as limits
-of that checkpoint, not of later rows.
+of that checkpoint, not of later rows. Checkpoint IDs refer to the
+development history before the first squash and are not in `main`'s history.
 
 ## Managed test evidence
 
@@ -51,6 +52,20 @@ Linux x64 with .NET 10 and 11, with no failures or skips. This refreshes
 Linux managed evidence only.
 
 ## NativeAOT test evidence
+
+Hosted [validation of `16c99ea`][infrastructure-ci] ran the NativeAOT
+smoke executable on Linux x64, Windows x64, and macOS 15 arm64 with
+dynamic code disabled on .NET 10.0.15 and 11.0.0. On each target Linux
+completed nine paired scenarios; Windows and macOS each completed six
+paired enrollments and correctly rejected both unsupported DH cases
+before TO2. The macOS enrollments include both CTR and both CBC cases
+and delegated replacement. This does not qualify DH, CCM, private TLS,
+or independent interoperability on macOS.
+
+The same run passed 1,625 managed tests per target on Linux and 1,618
+per target on Windows and macOS, with seven Linux-only HTTPS tests
+skipped on each of the latter platforms. Both new samples ran on all
+three platforms and both targets.
 
 Clean `276947d` passed all ten Linux x64 NativeAOT enrollment scenarios
 per target, including the two Linux DH cases and `delegated-replacement`.
@@ -107,32 +122,41 @@ Configure each policy separately.
 
 ## Platform and interoperability limits
 
-- ECDH-GCM primitive and KDF outputs on clean `8ae2855` matched three
-  specification-aligned, vendor-authored known-answer vectors on Windows
-  and Linux, on both TFMs: P-256/A128GCM, P-256/A256GCM and P-384/A256GCM.
+- A separate check on clean `8ae2855` matched three
+  [known-answer vectors in the Go candidate][go-ecdh-vectors] on Windows
+  and Linux, on both TFMs: P-256/A128GCM, P-256/A256GCM, and P-384/A256GCM.
+  The checked-in ECDH-GCM KDF tests use separate RFC 5903 inputs and expected
+  values computed with Python HMAC.
   The published cipher-suite row selects HMAC-SHA256 for those GCM suites,
   independent of curve. The results verify both role orders and exact ShSe
   and SEVK, not message bytes or external protocol execution.
 - Paired DH at the exact required exponent widths is implemented on
   Linux/OpenSSL. Do not infer Windows or macOS DH support from provider
-  availability. macOS DH and CCM are unsupported; the public CommonCrypto
-  CTR path has not run on macOS. The deferred manual arm64 macOS job was
-  prepared and parsed locally only; it has not been installed or run. It
-  requires `macos-15` arm64, the .NET 10 and 11 SDK toolchains, and public
-  Apple developer tools. It selects CTR vectors and the supported-platform
-  NativeAOT scenario matrix, including delegated replacement.
+  availability. macOS DH and CCM are unsupported. The hosted macOS
+  arm64 NativeAOT lane exercised the public CommonCrypto CTR path in
+  paired enrollment on both targets.
 - Public FDO 2.0 candidate peers include
   [fido-device-onboard/go-fdo#285][go] at `930d18f414353903e8e9b847cb2cf3d37e0497ce`
-  and its UEFI/Rust siblings. They share a vendor lineage and were not
-  executed here. The bounded search did not verify an issued FDO 2.0
-  Errata 1 or independent EtM, DH, ASYMKEX, or full message-byte vectors.
+  and its UEFI/Rust siblings. They share a vendor lineage. The
+  [isolated Go peer probe](../interop/README.md) completed DI, TO1,
+  and protected TO2 with ECDH256/A256GCM and credential reuse. The
+  configured fixture uses a null `RVPref`, embeds the tagged
+  `TO2.OVNextEntry20` value, matches the .NET role-and-counter IV
+  policy, and provides a synthetic `fdo.csr` simple-enrollment Owner.
+  The .NET Device authenticated `DoneAck20` and installed the
+  certificate. This does not qualify the unmodified Go example.
+  The UEFI/Rust peers were not executed. The bounded search did not
+  verify an issued FDO 2.0 Errata 1 or independent EtM, DH, ASYMKEX,
+  or full message-byte vectors.
   No alternate encoding is tried after a verification failure.
 - The paired roles select FDO 2.0 with bounded capability rules, not general
   version or vendor negotiation. The Rendezvous server accepts known 1.x
   capability bits alongside 2.0 in received Hello messages and selects
-  only 2.0. Client ACK and OwnerSign checks still require exact paired
-  flags; there is no fallback to 1.x. TO2 checks for the 2.0 bit rather
-  than requiring it to be the only version bit. The profile's complete key encoding,
+  only 2.0. The TO1 Device accepts known 1.x bits alongside 2.0 in the
+  acknowledgement without falling back or enabling unsolicited delegation.
+  TO0 ACK and OwnerSign checks still require exact paired flags. TO2 checks
+  for the 2.0 bit rather than requiring it to be the only version bit.
+  The profile's complete key encoding,
   attestation and cipher matrices have not been independently qualified.
   `DispDisable`, NOM, CA Owner and broader phase-specific Errors are not
   implemented. Omitted features and unresolved wire details are tracked in
@@ -170,7 +194,9 @@ Configure each policy separately.
 | Rendezvous | Non-null `RVPref` needs a decision on who supplies the signed value. Automatic DNS expansion and Device certificate-hash instructions need explicit host destination and TLS trust rules. |
 | Version and Errors | Client selection, no-common-version handling, vendor negotiation, and mixed-version voucher versus session AAD need explicit protocol rules. Other earlier-phase Errors still need a disclosure policy and validated framing. Do not retry an alternate version or encoding on rejection. |
 | Delegated dispositions and trust | `DispDisable` needs host authorization and durable Device deactivation and recovery semantics. NOM and CA Owner need separate trust and identity rules. The offline status interface does not itself authenticate CRL or OCSP evidence. |
-| Platform and interoperability | Windows and macOS lack a verified exact-width DH provider. macOS CCM is unsupported and its CTR execution remains unverified. Hosted macOS and independent peer execution need separate authorization; the paired runs do not establish conformance. |
+| Platform and interoperability | Windows and macOS lack a verified exact-width DH provider. macOS CCM is unsupported. The configured Go fixture completes one paired onboarding path; this does not establish Base Profile conformance. |
 | Delivery | The library isn't published. An approved local package is not a release. Publishing a package, pushing changes, or making the repository public requires a separate decision. |
 
 [go]: https://github.com/fido-device-onboard/go-fdo/pull/285
+[go-ecdh-vectors]: https://github.com/bkgoodman/go-fdo/blob/930d18f414353903e8e9b847cb2cf3d37e0497ce/kex/ecdh_kat_test.go
+[infrastructure-ci]: https://github.com/marcschier/fdo/actions/runs/45825454836

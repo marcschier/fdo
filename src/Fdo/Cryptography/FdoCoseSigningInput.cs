@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 
@@ -8,12 +10,12 @@ namespace Fdo.Cryptography;
 /// </summary>
 internal enum FdoSignatureOperation
 {
-    TO0OwnerSign,
-    TO1ProveToRV,
-    TO2ProveDevice,
-    TO2ProveOVHdr,
-    TO2SetupDevice,
-    OVEntry,
+    TO0OwnerSign = 0,
+    TO1ProveToRV = 1,
+    TO2ProveDevice = 2,
+    TO2ProveOVHdr = 3,
+    TO2SetupDevice = 4,
+    OVEntry = 5,
 }
 
 /// <summary>
@@ -39,6 +41,7 @@ internal static class FdoCoseSigningInput
     /// Encodes the one-element FDOExternalAAD array that section 3.3.8 defines
     /// for this version. The verifier constructs this value; it is not received.
     /// </summary>
+    /// <param name="operation">The protocol operation being encoded or verified.</param>
     public static byte[] EncodeExternalAad(FdoSignatureOperation operation)
     {
         string tag = GetDomainTag(operation);
@@ -54,6 +57,9 @@ internal static class FdoCoseSigningInput
     /// The caller supplies the exact protected-header and payload byte-string
     /// contents from the COSE_Sign1 message; they are copied without re-encoding.
     /// </summary>
+    /// <param name="operation">The protocol operation being encoded or verified.</param>
+    /// <param name="protectedHeader">The encoded COSE protected headers.</param>
+    /// <param name="payload">The payload of the FDO message.</param>
     public static byte[] CreateToBeSigned(
         FdoSignatureOperation operation,
         ReadOnlySpan<byte> protectedHeader,

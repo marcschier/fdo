@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
@@ -79,6 +81,7 @@ public sealed class FdoOwnershipVoucherChainVerifierTests
         int calls = 0;
         async ValueTask<ReadOnlyMemory<byte>> Compute(ReadOnlyMemory<byte> header, CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
             calls++;
             await Task.Yield();
             return FdoHashValue.ComputeHmac(fixture.HmacAlgorithm, fixture.Secret, header.Span).Value;
@@ -352,11 +355,11 @@ public sealed class FdoOwnershipVoucherChainVerifierTests
     {
         using var fixture = new VoucherFixture();
 
-        await Assert.That(Throws<CborContentException>(() => new FdoOwnershipVoucherChainVerifier(
+        await Assert.That(Throws<CborContentException>(() => _ = new FdoOwnershipVoucherChainVerifier(
             fixture.CreateHeaderTag(version: 100), fixture.EncodedHeaderHmac, 2))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoOwnershipVoucherChainVerifier(
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoOwnershipVoucherChainVerifier(
             fixture.HeaderTag, fixture.EncodedHeaderHmac, -1))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoOwnershipVoucherChainVerifier(
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoOwnershipVoucherChainVerifier(
             fixture.HeaderTag, fixture.EncodedHeaderHmac, 256))).IsTrue();
     }
 

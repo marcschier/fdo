@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -41,6 +43,12 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// Starts an untrusted chain. The header tag includes its byte-string
     /// wrapper; the HMAC is the exact encoded FDO HMac value.
     /// </summary>
+    /// <param name="encodedHeaderTag">The exact voucher header, including its CBOR byte-string wrapper.</param>
+    /// <param name="encodedHeaderHmac">The encoded voucher header HMAC.</param>
+    /// <param name="entryCount">The number of voucher entries.</param>
+    /// <param name="maxEncodedBytes">The maximum size of the encoded value, in bytes.</param>
+    /// <param name="maxDepth">The maximum permitted CBOR nesting depth.</param>
+    /// <param name="maxItems">The maximum number of CBOR items to process.</param>
     public FdoOwnershipVoucherChainVerifier(
         ReadOnlyMemory<byte> encodedHeaderTag,
         ReadOnlyMemory<byte> encodedHeaderHmac,
@@ -100,6 +108,10 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// does not validate certificates, establish Device trust, or verify proof
     /// of possession; the role must bind those checks to this same run.
     /// </summary>
+    /// <param name="encodedChain">The encoded certificate chain.</param>
+    /// <exception cref="CryptographicException">
+    /// The Device certificate chain does not match the voucher header.
+    /// </exception>
     public ReadOnlyMemory<byte> CheckDeviceCertificateChain(ReadOnlyMemory<byte> encodedChain)
     {
         ThrowIfClosed();
@@ -130,6 +142,11 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// manufacturer-key hash, and HMAC secret. It does not verify the Owner's
     /// proof or, when rendezvous was used, the signed redirect.
     /// </summary>
+    /// <param name="expectedGuid">The independently known Device GUID.</param>
+    /// <param name="expectedManufacturerKeyHash">The provisioned hash of the manufacturer key.</param>
+    /// <param name="expectedHmacAlgorithm">The HMAC algorithm required by the provisioned credential.</param>
+    /// <param name="deviceHmacSecret">The Device's voucher HMAC key.</param>
+    /// <exception cref="CryptographicException">The ownership voucher header HMAC did not verify.</exception>
     public void CheckDeviceCredentials(
         ReadOnlySpan<byte> expectedGuid,
         FdoHashValue expectedManufacturerKeyHash,
@@ -164,6 +181,12 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// Checks the Device anchors and compares the header HMAC computed by
     /// the host without requesting the secret bytes.
     /// </summary>
+    /// <param name="expectedGuid">The independently known Device GUID.</param>
+    /// <param name="expectedManufacturerKeyHash">The provisioned hash of the manufacturer key.</param>
+    /// <param name="expectedHmacAlgorithm">The HMAC algorithm required by the provisioned credential.</param>
+    /// <param name="computeHmac">The host callback that computes the voucher HMAC without exporting its key.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="CryptographicException">The ownership voucher header HMAC did not verify.</exception>
     public async ValueTask CheckDeviceCredentialsAsync(
         ReadOnlyMemory<byte> expectedGuid,
         FdoHashValue expectedManufacturerKeyHash,
@@ -224,6 +247,13 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// Verifies the next complete tagged COSE_Sign1 entry and advances to its
     /// signed next-owner key. A failed check closes the verifier.
     /// </summary>
+    /// <param name="index">The zero-based index of the entry or page.</param>
+    /// <param name="encodedEntry">The exact encoded voucher entry.</param>
+    /// <exception cref="InvalidOperationException">The ownership voucher entry is out of order.</exception>
+    /// <exception cref="CryptographicException">
+    /// The ownership voucher header-info hash did not verify. The ownership voucher previous-entry hash did not verify.
+    /// The ownership voucher public-key type or algorithm changed within the chain.
+    /// </exception>
     public void AppendEntry(int index, ReadOnlyMemory<byte> encodedEntry)
     {
         ThrowIfClosed();
@@ -288,6 +318,7 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// Completes internal chain checks and compares the final key with the
     /// advertised Owner key. This alone does not establish trust.
     /// </summary>
+    /// <param name="advertisedOwnerKey">The encoded public key advertised by the Owner.</param>
     /// <returns>The verified previous-entry hash algorithm, or null for a zero-entry voucher.</returns>
     public FdoHashAlgorithm? CompleteInternalConsistency(ReadOnlyMemory<byte> advertisedOwnerKey)
     {
@@ -300,6 +331,9 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// certificate chain to this header. Manufacturer and Device trust remain
     /// the caller's responsibility.
     /// </summary>
+    /// <param name="ownerKey">The Owner public key that anchors verification.</param>
+    /// <param name="encodedDeviceCertificateChain">The exact encoded Device attestation chain from the voucher.</param>
+    /// <exception cref="InvalidOperationException">Paired onboarding requires at least one voucher entry.</exception>
     public CheckedOwnerVoucher CompleteOwnerChecks(
         ReadOnlyMemory<byte> ownerKey,
         ReadOnlyMemory<byte> encodedDeviceCertificateChain)
@@ -327,6 +361,10 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// The caller must still establish manufacturer and Device trust and
     /// verify the Owner's separate signature.
     /// </summary>
+    /// <param name="encodedDeviceCertificateChain">The exact encoded Device attestation chain from the voucher.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Rendezvous requires a complete voucher with at least one entry.
+    /// </exception>
     public CheckedRendezvousVoucher CompleteRendezvousChecks(
         ReadOnlyMemory<byte> encodedDeviceCertificateChain)
     {
@@ -352,6 +390,7 @@ internal sealed class FdoOwnershipVoucherChainVerifier : IDisposable
     /// Requires the Device credential checks as well as internal chain checks.
     /// The caller must still verify the Owner proof using this same key.
     /// </summary>
+    /// <param name="advertisedOwnerKey">The encoded public key advertised by the Owner.</param>
     public ReadOnlyMemory<byte> CompleteDeviceChecks(ReadOnlyMemory<byte> advertisedOwnerKey) =>
         Complete(advertisedOwnerKey, requireDeviceCredentials: true);
 

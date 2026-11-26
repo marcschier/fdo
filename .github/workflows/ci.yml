@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'validation/fdo-parity-*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  managed:
+    name: Managed (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-15]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            10.0.404
+            11.0.100
+      - run: dotnet restore Fdo.slnx
+      - run: dotnet build Fdo.slnx -c Release --no-restore -p:FdoVerifyDiagnostics=true
+      - name: Check compiler diagnostics, including informational results
+        shell: pwsh
+        run: ./eng/Test-BuildDiagnostics.ps1
+      - name: Check formatting and source headers
+        if: runner.os == 'Linux'
+        shell: pwsh
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          dotnet format whitespace Fdo.slnx --verify-no-changes --no-restore
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $base = $env:BASE
+          if (!$base -or $base -match '^0+$') { $base = 'HEAD^' }
+          ./eng/Test-SourceConventions.ps1 -Base $base
+      - name: Run managed tests and samples on both frameworks
+        shell: pwsh
+        run: |
+          foreach ($tfm in 'net10.0', 'net11.0') {
+            dotnet test --project tests/Fdo.Tests/Fdo.Tests.csproj -c Release -f $tfm --no-build
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            foreach ($sample in 'Fdo.InProcess', 'Fdo.HttpLoopback') {
+              dotnet run --project "samples/$sample" -c Release -f $tfm --no-build
+              if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            }
+          }
+      - name: Inspect signed package without publishing
+        if: runner.os == 'Linux'
+        shell: pwsh
+        run: |
+          dotnet pack src/Fdo/Fdo.csproj -c Release --no-build -o bin/packages
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./eng/Test-Package.ps1 -Directory bin/packages
+  native:
+    name: NativeAOT (${{ matrix.rid }}, ${{ matrix.tfm }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        tfm: [net10.0, net11.0]
+        os: [windows-latest, ubuntu-latest, macos-15]
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-15
+            rid: osx-arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            10.0.404
+            11.0.100
+      - name: Publish and run native smoke
+        shell: pwsh
+        env:
+          RID: ${{ matrix.rid }}
+          TFM: ${{ matrix.tfm }}
+        run: |
+          $output = Join-Path $PWD 'bin/native-smoke'
+          dotnet publish tests/Fdo.AotSmoke/Fdo.AotSmoke.csproj -c Release -f $env:TFM -r $env:RID -o $output
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./eng/Invoke-NativeSmoke.ps1 -Directory $output -Rid $env:RID

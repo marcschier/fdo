@@ -8,6 +8,8 @@ The [FIDO Alliance download page][downloads] still lists that April revision.
 No published Errata 1 or independent vectors resolving the wire questions
 below were verified for this audit.
 
+For later platform evidence, see [qualification and support](FdoQualification.md).
+
 | Requirement | Role and level | Evidence and remaining work |
 |---|---|---|
 | Version and capabilities, §§1.7.1, 1.7.4, 3.3.2–3.3.3 | Required capability mechanism. §3.3.3.1 requires Owner and Rendezvous version negotiation and recommends it for Devices. No particular legacy version required. | `FdoInitialMessageCodecTests` and `FdoTo2InitialCodecTests` cover message fields and the paired choices. DI and TO2 select 2.0 with bounded capability handling; TO0/TO1 use fixed paired capabilities, and the TO2 delegation opt-in does not verify Rendezvous negotiation. Audit version offers, selection and vendor-capability behavior separately from version 1.x support. |

@@ -1,5 +1,8 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -22,6 +25,8 @@ public sealed class FdoCaCertificates
     /// Snapshots the supplied DER objects. At least one certificate or CRL is
     /// required, and their combined size must fit in an FDO message.
     /// </summary>
+    /// <param name="certificates">The DER certificates to distribute.</param>
+    /// <param name="certificateRevocationLists">Optional DER certificate revocation lists to distribute.</param>
     public FdoCaCertificates(
         IReadOnlyList<ReadOnlyMemory<byte>> certificates,
         IReadOnlyList<ReadOnlyMemory<byte>>? certificateRevocationLists = null)
@@ -85,9 +90,9 @@ public sealed class FdoCaCertificates
         return result;
     }
 
-    private static IReadOnlyList<ReadOnlyMemory<byte>> Copy(IReadOnlyList<ReadOnlyMemory<byte>> values)
+    private static ReadOnlyCollection<ReadOnlyMemory<byte>> Copy(ReadOnlyMemory<byte>[] values)
     {
-        var result = new ReadOnlyMemory<byte>[values.Count];
+        var result = new ReadOnlyMemory<byte>[values.Length];
         for (int i = 0; i < result.Length; i++)
         {
             result[i] = values[i].ToArray();

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -78,6 +80,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     /// Records that the prepared CA or enrollment request was sent. The role must abort the
     /// session instead if transmission fails or its outcome is ambiguous.
     /// </summary>
+    /// <exception cref="InvalidOperationException">No enrollment request is ready to send.</exception>
     public void MarkRequestSent()
     {
         lock (_sync)
@@ -139,6 +142,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     /// Returns a copy of the pending certificate, not an installed credential
     /// or evidence of completed onboarding.
     /// </summary>
+    /// <exception cref="InvalidOperationException">No usable enrollment response is pending.</exception>
     public ReadOnlyMemory<byte> CopyPendingCertificate()
     {
         lock (_sync)
@@ -153,6 +157,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     }
 
     /// <summary>Transfers the pending private key to the caller for installation.</summary>
+    /// <exception cref="InvalidOperationException">No usable server-generated key is pending.</exception>
     public byte[] TakePendingPrivateKey()
     {
         lock (_sync)
@@ -178,6 +183,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     }
 
     /// <summary>Returns detached CA material, not established trust.</summary>
+    /// <exception cref="InvalidOperationException">No usable CA certificate response is pending.</exception>
     public FdoCaCertificates CopyPendingCaCertificates()
     {
         lock (_sync)
@@ -192,6 +198,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     }
 
     /// <summary>Returns the attributes staged from the Owner response.</summary>
+    /// <exception cref="InvalidOperationException">No usable CSR attributes response is pending.</exception>
     public FdoCsrAttributes CopyPendingCsrAttributes()
     {
         lock (_sync)
@@ -206,6 +213,10 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     }
 
     /// <summary>Validates and prepares the host-selected CSR after discovery.</summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The Device is not awaiting a CSR after attribute discovery.
+    /// </exception>
     public Entry PrepareEnrollmentRequest(ReadOnlyMemory<byte> request)
     {
         lock (_sync)
@@ -235,6 +246,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
     }
 
     /// <summary>Returns the exact validated request for the current enrollment.</summary>
+    /// <exception cref="InvalidOperationException">No usable enrollment request is available.</exception>
     public ReadOnlyMemory<byte> CopyEnrollmentRequest()
     {
         lock (_sync)
@@ -248,7 +260,7 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
         }
     }
 
-    private IReadOnlyList<Entry> Process(string messageName, ReadOnlyMemory<byte> encodedValue)
+    private Entry[] Process(string messageName, ReadOnlyMemory<byte> encodedValue)
     {
         if (string.Equals(messageName, "active", StringComparison.Ordinal))
         {
@@ -301,8 +313,12 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
             return Array.Empty<Entry>();
         }
 
-        string responseName = _isServerKeyGeneration ? "serverkeygen-res" :
-            _isReenrollment ? "simplereenroll-res" : "simpleenroll-res";
+        string responseName = (_isServerKeyGeneration, _isReenrollment) switch
+        {
+            (true, _) => "serverkeygen-res",
+            (_, true) => "simplereenroll-res",
+            _ => "simpleenroll-res"
+        };
         if (_state == State.AwaitingResponse &&
             string.Equals(messageName, responseName, StringComparison.Ordinal))
         {
@@ -400,17 +416,17 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
 
     private enum State
     {
-        Inactive,
-        CaRequestPrepared,
-        AwaitingCaResponse,
-        AttributesRequestPrepared,
-        AwaitingAttributesResponse,
-        AttributesReceived,
-        RequestPrepared,
-        AwaitingResponse,
-        ResponseReceived,
-        Disabled,
-        Failed,
+        Inactive = 0,
+        CaRequestPrepared = 1,
+        AwaitingCaResponse = 2,
+        AttributesRequestPrepared = 3,
+        AwaitingAttributesResponse = 4,
+        AttributesReceived = 5,
+        RequestPrepared = 6,
+        AwaitingResponse = 7,
+        ResponseReceived = 8,
+        Disabled = 9,
+        Failed = 10,
     }
 }
 

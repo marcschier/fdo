@@ -1,0 +1,10 @@
+diff --git a/to2_messages_v200.go b/to2_messages_v200.go
+--- a/to2_messages_v200.go
++++ b/to2_messages_v200.go
+@@ -129,5 +129,5 @@
+ // From Owner to Device - provides voucher entry
+ type OVNextEntry20Msg struct {
+ 	OVEntryNum uint8
+-	OVEntry    []byte // COSE_Sign1 encoded voucher entry
++	OVEntry    cbor.RawBytes // Embedded, tagged COSE_Sign1 voucher entry
+ }

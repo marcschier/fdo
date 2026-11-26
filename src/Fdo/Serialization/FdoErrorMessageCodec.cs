@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Globalization;
@@ -25,6 +27,12 @@ internal sealed class FdoErrorMessageCodec
     /// Uses an existing request correlation ID and a non-sensitive description
     /// containing only the previous message ID. An Error must never answer an Error.
     /// </summary>
+    /// <param name="errorCode">The numeric FDO Error code.</param>
+    /// <param name="previousMessageId">The identifier of the preceding protocol message.</param>
+    /// <param name="correlationId">The identifier that correlates the Error with the failing exchange.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="previousMessageId"/> identifies an Error message.
+    /// </exception>
     public ReadOnlyMemory<byte> Encode(ushort errorCode, byte previousMessageId, ulong correlationId)
     {
         if (previousMessageId == FdoMessageTypes.Error)
@@ -49,6 +57,14 @@ internal sealed class FdoErrorMessageCodec
     /// callers must not automatically log it or echo it to another peer.
     /// Non-null timestamps and null correlation IDs are not implemented.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// An FDO Error body must contain five fields. An FDO Error cannot answer another Error. An FDO Error description
+    /// must be a text string.
+    /// </exception>
+    /// <exception cref="NotSupportedException">
+    /// A null FDO Error correlation ID is not supported. Non-null FDO Error timestamps are not supported.
+    /// </exception>
     public ErrorMessage Decode(ReadOnlyMemory<byte> encoded)
     {
         var reader = new CborReader(_cbor.ValidateAndCopy(encoded), CborConformanceMode.Canonical);

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -38,18 +40,37 @@ internal sealed class FdoRendezvousCodec
         ushort type, ReadOnlyMemory<byte> encoded, bool allowDelegation)
     {
         FdoInitialMessageCodec.InitialMessage message = _initial.Decode(type, encoded);
-        const FdoKnownCapabilities versions = FdoKnownCapabilities.Fdo10 |
-            FdoKnownCapabilities.Fdo11 | FdoKnownCapabilities.Fdo20;
-        FdoKnownCapabilities allowed = versions |
-            (allowDelegation ? FdoKnownCapabilities.Delegation : FdoKnownCapabilities.None);
-        ReadOnlySpan<byte> flags = message.CapabilityFlags.Span;
-        if (flags.Length != 1 || message.VendorCapabilities.Count != 0 ||
-            (flags[0] & (byte)FdoKnownCapabilities.Fdo20) == 0 || (flags[0] & ~(byte)allowed) != 0)
+        if (!IsSupportedAdvertisement(message, allowDelegation))
         {
-            throw new NotSupportedException("The paired Rendezvous server requires a known capability offer that includes FDO 2.0.");
+            throw new NotSupportedException(
+                "The paired Rendezvous server requires a known capability offer that includes FDO 2.0.");
         }
 
         return message;
+    }
+
+    /// <summary>
+    /// Reads the TO1 nonce without changing the Device's requested mode.
+    /// </summary>
+    /// <param name="encoded">The encoded TO1.HelloRVAck body.</param>
+    /// <param name="requiresDelegation">Whether the Device requested delegated discovery.</param>
+    /// <exception cref="NotSupportedException">
+    /// The advertisement lacks FDO 2.0 or requested delegation, or contains unsupported flags.
+    /// </exception>
+    internal ReadOnlyMemory<byte> ReadDeviceHelloAck(ReadOnlyMemory<byte> encoded, bool requiresDelegation)
+    {
+        FdoInitialMessageCodec.InitialMessage message = _initial.Decode(FdoMessageTypes.TO1HelloRVAck, encoded);
+        if (!IsSupportedAdvertisement(message, allowDelegation: true))
+        {
+            throw new NotSupportedException("The TO1 acknowledgement must use known flags and include FDO 2.0.");
+        }
+
+        if (requiresDelegation && (message.AdvertisedCapabilities & FdoKnownCapabilities.Delegation) == 0)
+        {
+            throw new NotSupportedException("The Rendezvous Server did not select the requested TO1 capability.");
+        }
+
+        return message.GuidOrNonce!.Value;
     }
 
     public static bool IsDelegated(ReadOnlyMemory<byte> flags) =>
@@ -315,6 +336,7 @@ internal sealed class FdoRendezvousCodec
     /// Returns whether an untrusted rendezvous blob carries a non-null
     /// DelegateChain. Nothing about the blob is authenticated.
     /// </summary>
+    /// <param name="signedRedirect">The encoded, signed Owner redirect.</param>
     public bool HasUntrustedDelegateChain(ReadOnlyMemory<byte> signedRedirect) =>
         !ReadUntrustedRedirect(signedRedirect, allowDelegateChain: true).DelegateChain.IsEmpty;
 
@@ -324,6 +346,12 @@ internal sealed class FdoRendezvousCodec
     /// the redirect permission, and its leaf key must have signed the exact
     /// blob. The chain is not compared with any TO2 Delegate.
     /// </summary>
+    /// <param name="signedRedirect">The encoded, signed Owner redirect.</param>
+    /// <param name="encodedOwnerKey">The encoded Owner public key used in this exchange.</param>
+    /// <param name="verificationTime">The instant used to evaluate certificate validity.</param>
+    /// <param name="expectedTo0">The independently expected Owner registration data.</param>
+    /// <param name="expectedHash">The trusted hash against which to verify the value.</param>
+    /// <param name="offlineRevocation">The optional offline status policy for the Delegate path.</param>
     /// <exception cref="NotSupportedException">The blob carries no DelegateChain.</exception>
     /// <exception cref="FdoDelegateChainException">The chain is not authentic for the Owner key.</exception>
     /// <exception cref="FdoDelegateNotPermittedException">The chain lacks the redirect permission.</exception>
@@ -427,10 +455,7 @@ internal sealed class FdoRendezvousCodec
 
     public ReadOnlyMemory<byte> EncodeAcceptOwner(uint waitSeconds)
     {
-        if (waitSeconds == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(waitSeconds));
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(waitSeconds);
 
         var writer = new CborWriter(CborConformanceMode.Canonical);
         writer.WriteStartArray(1);
@@ -543,7 +568,7 @@ internal sealed class FdoRendezvousCodec
         return _cbor.ValidateAndCopy(writer.Encode());
     }
 
-    internal ReadOnlyMemory<byte> EncodeRedirectPage(
+    internal static ReadOnlyMemory<byte> EncodeRedirectPage(
         IReadOnlyList<FdoRendezvousRegistrationRecord> records, int index, int count)
     {
         var writer = new CborWriter(CborConformanceMode.Canonical);
@@ -724,6 +749,18 @@ internal sealed class FdoRendezvousCodec
 
     private static byte Capabilities(bool delegated) =>
         (byte)(FdoKnownCapabilities.Fdo20 | (delegated ? FdoKnownCapabilities.Delegation : FdoKnownCapabilities.None));
+
+    private static bool IsSupportedAdvertisement(
+        FdoInitialMessageCodec.InitialMessage message, bool allowDelegation)
+    {
+        const FdoKnownCapabilities versions = FdoKnownCapabilities.Fdo10 |
+            FdoKnownCapabilities.Fdo11 | FdoKnownCapabilities.Fdo20;
+        FdoKnownCapabilities allowed = versions |
+            (allowDelegation ? FdoKnownCapabilities.Delegation : FdoKnownCapabilities.None);
+        ReadOnlySpan<byte> flags = message.CapabilityFlags.Span;
+        return flags.Length == 1 && message.VendorCapabilities.Count == 0 &&
+            (flags[0] & (byte)FdoKnownCapabilities.Fdo20) != 0 && (flags[0] & ~(byte)allowed) == 0;
+    }
 
     private static void RequireCapabilities(
         ReadOnlyMemory<byte> flags, IReadOnlyList<string> vendors, bool allowDelegation)

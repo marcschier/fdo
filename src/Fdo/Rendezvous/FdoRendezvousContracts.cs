@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -56,6 +58,10 @@ public sealed class FdoRendezvousAddress
     /// Creates an address with an IPv4 or IPv6 byte string, a DNS name, or
     /// both. Port zero and protocols other than HTTP and HTTPS are rejected.
     /// </summary>
+    /// <param name="ipAddress">The IP address in the advertised endpoint.</param>
+    /// <param name="dnsName">The DNS name in the advertised address.</param>
+    /// <param name="port">The advertised TCP port.</param>
+    /// <param name="protocol">The selected FDO subprotocol.</param>
     public FdoRendezvousAddress(
         ReadOnlyMemory<byte>? ipAddress,
         string? dnsName,
@@ -109,6 +115,9 @@ public sealed class FdoRendezvousResponse
     private readonly byte[] _encodedBody;
 
     /// <summary>Snapshots one response received by a rendezvous transport.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
     public FdoRendezvousResponse(
         ushort protocolVersion,
         FdoRendezvousMessageType messageType,
@@ -144,6 +153,10 @@ public sealed class FdoRendezvousResponse
 public interface IFdoRendezvousTransport
 {
     /// <summary>Sends one request and returns the Rendezvous Server response.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoRendezvousResponse> SendAsync(
         ushort protocolVersion,
         FdoRendezvousMessageType messageType,
@@ -167,6 +180,13 @@ public sealed class FdoRendezvousRegistration
     private readonly byte[] _signedRedirect;
 
     /// <summary>Rehydrates the exact accepted registration fields.</summary>
+    /// <param name="registrationId">The stable identifier of a stored registration.</param>
+    /// <param name="deviceGuid">The 16-byte Device GUID in wire order.</param>
+    /// <param name="encodedManufacturerKey">The encoded manufacturer public key from the voucher.</param>
+    /// <param name="encodedOwnerKey">The encoded Owner public key used in this exchange.</param>
+    /// <param name="encodedDeviceCertificateChain">The exact encoded Device attestation chain from the voucher.</param>
+    /// <param name="signedRedirect">The encoded, signed Owner redirect.</param>
+    /// <param name="expiresAt">The exclusive end of the record's validity.</param>
     public FdoRendezvousRegistration(
         Guid registrationId,
         ReadOnlyMemory<byte> deviceGuid,
@@ -231,9 +251,13 @@ public sealed class FdoRendezvousRegistration
 public interface IFdoRendezvousRegistrationStore
 {
     /// <summary>Durably inserts or replaces one accepted registration.</summary>
+    /// <param name="registration">The registration associated with the Device GUID.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask StoreAsync(FdoRendezvousRegistration registration, CancellationToken cancellationToken);
 
     /// <summary>Reads the current registration for a Device GUID.</summary>
+    /// <param name="deviceGuid">The 16-byte Device GUID in wire order.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoRendezvousRegistration?> FindAsync(
         ReadOnlyMemory<byte> deviceGuid,
         CancellationToken cancellationToken);
@@ -243,10 +267,10 @@ public interface IFdoRendezvousRegistrationStore
 public enum FdoRendezvousProtocol
 {
     /// <summary>One Owner registration using TO0.</summary>
-    OwnerRegistration,
+    OwnerRegistration = 0,
 
     /// <summary>One Device lookup using TO1.</summary>
-    DeviceLookup,
+    DeviceLookup = 1,
 }
 
 /// <summary>Trust, storage, and resource limits for one Rendezvous Server session.</summary>

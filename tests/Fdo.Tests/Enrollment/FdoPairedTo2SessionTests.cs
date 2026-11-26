@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -36,6 +38,9 @@ namespace Fdo.Tests.Enrollment;
 [UnsupportedOSPlatform("browser")]
 public sealed class FdoPairedTo2SessionTests
 {
+    private static readonly string[] OwnerRegistrationTargets = ["/fdo/200/msg/20", "/fdo/200/msg/22"];
+    private static readonly string[] DeviceLookupTargets = ["/fdo/200/msg/30", "/fdo/200/msg/32"];
+
     [Test]
     public Task RunsDiTransferTo0To1AndProtectedTo2OverHttp() =>
         RunInitializedHttpCompositionAsync(forgeRedirect: false);
@@ -65,7 +70,7 @@ public sealed class FdoPairedTo2SessionTests
         IReadOnlyList<RecordedRequest> manufacturingRequests = await manufacturingServing;
         FdoManufacturerInitializeVoucher voucher = initialization.Voucher!;
         await Assert.That(manufacturingRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-            new[] { "/manufacturing/fdo/200/msg/10", "/manufacturing/fdo/200/msg/12" })).IsTrue();
+            ["/manufacturing/fdo/200/msg/10", "/manufacturing/fdo/200/msg/12"])).IsTrue();
         await Assert.That(manufacturingRequests[0].Authorization).IsNull();
         await Assert.That(manufacturingRequests[1].Authorization!.StartsWith(
             "Bearer ", StringComparison.Ordinal)).IsTrue();
@@ -133,7 +138,7 @@ public sealed class FdoPairedTo2SessionTests
         ReadOnlyMemory<byte> finalOwnerKey = new FdoPublicKeyCodec().Encode(fixture.Auth.Voucher.FinalOwner);
         await Assert.That(accepted).IsEqualTo(120U);
         await Assert.That(registrationRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-            new[] { "/fdo/200/msg/20", "/fdo/200/msg/22" })).IsTrue();
+            OwnerRegistrationTargets)).IsTrue();
         await Assert.That(submittedVoucher.Span.SequenceEqual(transferred.EncodedVoucher.Span)).IsTrue();
         await Assert.That(stored.DeviceGuid.Span.SequenceEqual(credential.DeviceGuid.Span)).IsTrue();
         await Assert.That(stored.EncodedOwnerKey.Span.SequenceEqual(finalOwnerKey.Span)).IsTrue();
@@ -184,7 +189,7 @@ public sealed class FdoPairedTo2SessionTests
             lookupDevice, discovery[1].BaseAddress, 8192, timeout.Token);
         IReadOnlyList<RecordedRequest> lookupRequests = await lookupServing;
         await Assert.That(lookupRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-            new[] { "/fdo/200/msg/30", "/fdo/200/msg/32" })).IsTrue();
+            DeviceLookupTargets)).IsTrue();
         await Assert.That(lookup.SignedRedirect.Span.SequenceEqual(deliveredRedirect.Span)).IsTrue();
         if (!forgeRedirect)
         {
@@ -240,7 +245,7 @@ public sealed class FdoPairedTo2SessionTests
             }
 
             await Assert.That(observedRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-                new[] { "/fdo/200/msg/80", "/fdo/200/msg/82", "/fdo/200/msg/84" })).IsTrue();
+                ["/fdo/200/msg/80", "/fdo/200/msg/82", "/fdo/200/msg/84"])).IsTrue();
             await Assert.That(ownerListener.HasPendingConnection).IsFalse();
             await Assert.That(fixture.Handler.IssueCalls).IsEqualTo(0);
             await Assert.That(fixture.Handler.CommitCalls).IsEqualTo(0);
@@ -255,11 +260,10 @@ public sealed class FdoPairedTo2SessionTests
                 device, ownerAddress, 8192, timeout.Token);
             IReadOnlyList<RecordedRequest> ownerRequests = await ownerServing;
             await Assert.That(ownerRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-                new[]
-                {
+                [
                     "/fdo/200/msg/80", "/fdo/200/msg/82", "/fdo/200/msg/84",
                     "/fdo/200/msg/86", "/fdo/200/msg/88", "/fdo/200/msg/88", "/fdo/200/msg/90",
-                })).IsTrue();
+                ])).IsTrue();
             await Assert.That(ownerRequests[0].Authorization).IsNull();
             string token = ownerRequests[1].Authorization!;
             await Assert.That(token.StartsWith("Bearer ", StringComparison.Ordinal)).IsTrue();
@@ -350,9 +354,9 @@ public sealed class FdoPairedTo2SessionTests
 
         await Assert.That(accepted).IsEqualTo(120U);
         await Assert.That(registrationRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-            new[] { "/fdo/200/msg/20", "/fdo/200/msg/22" })).IsTrue();
+            OwnerRegistrationTargets)).IsTrue();
         await Assert.That(lookupRequests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-            new[] { "/fdo/200/msg/30", "/fdo/200/msg/32" })).IsTrue();
+            DeviceLookupTargets)).IsTrue();
         await Assert.That(registrationRequests[0].Authorization).IsNull();
         await Assert.That(lookupRequests[0].Authorization).IsNull();
         await Assert.That(registrationRequests[1].Authorization).IsNotEqualTo(lookupRequests[1].Authorization);
@@ -361,13 +365,12 @@ public sealed class FdoPairedTo2SessionTests
         await Assert.That(registrationServer.FinalResponseHandoffConfirmed).IsTrue();
         await Assert.That(lookupServer.FinalResponseHandoffConfirmed).IsTrue();
         await Assert.That(requests.Select(request => request.Uri!.AbsolutePath).SequenceEqual(
-            new[]
-            {
+            [
                 "/onboarding/fdo/200/msg/80", "/onboarding/fdo/200/msg/82",
                 "/onboarding/fdo/200/msg/84", "/onboarding/fdo/200/msg/84",
                 "/onboarding/fdo/200/msg/86", "/onboarding/fdo/200/msg/88",
                 "/onboarding/fdo/200/msg/88", "/onboarding/fdo/200/msg/90",
-            })).IsTrue();
+            ])).IsTrue();
         await Assert.That(requests[0].Authorization).IsNull();
         string token = requests[1].Authorization!;
         await Assert.That(token.StartsWith("Bearer ", StringComparison.Ordinal)).IsTrue();
@@ -517,7 +520,8 @@ public sealed class FdoPairedTo2SessionTests
         }
         catch (FdoTransportException clientError)
         {
-            await Task.WhenAny(serving, Task.Delay(TimeSpan.FromSeconds(2)));
+            await ((Task)serving).WaitAsync(TimeSpan.FromSeconds(2))
+                .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
             if (!serving.IsCompleted)
             {
                 await timeout.CancelAsync();
@@ -706,7 +710,8 @@ public sealed class FdoPairedTo2SessionTests
     public async Task PrivateCaConfigurationCannotBeUsedWithPlainHttpOrALeafAnchor()
     {
         using var tls = new TlsCertificateFixture(matchingName: true);
-        await Assert.That(Throws<ArgumentException>(() => new FdoHttpPrivateTrust(tls.ServerCertificate.RawData))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoHttpPrivateTrust(tls.ServerCertificate.RawData))).IsTrue();
         using var fixture = new Fixture();
         using FdoDeviceSession device = fixture.CreateDeviceSession();
         var trust = new FdoHttpPrivateTrust(tls.RootCertificate.RawData);
@@ -3140,7 +3145,7 @@ public sealed class FdoPairedTo2SessionTests
         ReadOnlyMemory<byte> probe = initial.EncodeProbe(new FdoTo2InitialCodec.Probe(
             new byte[] { 4 }, Array.Empty<string>(), fixture.Auth.Voucher.Guid, 8192,
             new long[] { (long)FdoHashAlgorithm.Sha256 }, RandomNumberGenerator.GetBytes(16)));
-        using var probeBody = new MemoryStream(probe.ToArray(), writable: false);
+        await using var probeBody = new MemoryStream(probe.ToArray(), writable: false);
         FdoHttpServerResponse acknowledgement = await binding.ProcessAsync(new FdoHttpServerRequest
         {
             Method = "POST",
@@ -3338,10 +3343,9 @@ public sealed class FdoPairedTo2SessionTests
             await Assert.That(reply.ServiceInfo.Count).IsEqualTo(0);
         }
 
-        var completion = new FdoTo2CompletionCodec();
         FdoOwnerResponse ack = await SendOwnerAsync(owner, FdoTo2MessageType.Done20,
-            channel.Seal(completion.EncodeDone(opened.DoneNonce, null)));
-        await Assert.That(completion.DecodeDoneAck(channel.Open(ack.EncodedBody)).Span
+            channel.Seal(FdoTo2CompletionCodec.EncodeDone(opened.DoneNonce, null)));
+        await Assert.That(FdoTo2CompletionCodec.DecodeDoneAck(channel.Open(ack.EncodedBody)).Span
             .SequenceEqual(opened.ReadyNonce)).IsTrue();
         await Assert.That(owner.CommittedEnrollment).IsNotNull();
     }
@@ -3757,9 +3761,13 @@ public sealed class FdoPairedTo2SessionTests
             run.Handler.Secret = oldSecret;
         }
         else if (failure == "algorithm")
+        {
             run.Secret.Algorithm = FdoDeviceHmacAlgorithm.HmacSha384;
+        }
         else
+        {
             run.Secret.KeySizeInBytes--;
+        }
 
         if (failure == "length")
             await CatchAsync<ArgumentException>(run.Fixture.RunAsync);
@@ -3936,9 +3944,14 @@ public sealed class FdoPairedTo2SessionTests
         bool activated = interruption is "device-activation" or "complete";
         await Assert.That(string.Join(",", owner.Select(effect => effect.Operation)))
             .IsEqualTo(interruption == "owner-commit" ? "voucher" : "voucher,enrollment");
+        string expectedDeviceOperations = interruption switch
+        {
+            "complete" => "active,stage,active,install",
+            "device-activation" => "active,stage,active",
+            _ => "active,stage",
+        };
         await Assert.That(string.Join(",", device.Select(effect => effect.Operation)))
-            .IsEqualTo(interruption == "complete" ? "active,stage,active,install" :
-                activated ? "active,stage,active" : "active,stage");
+            .IsEqualTo(expectedDeviceOperations);
         await Assert.That(device[1].Input != previousGuid).IsTrue();
         await Assert.That(device.Last(effect => effect.Operation == "active").Input)
             .IsEqualTo(activated ? device[1].Input : previousGuid);
@@ -4245,17 +4258,16 @@ public sealed class FdoPairedTo2SessionTests
                 new FdoCsrBase64TextCodec(4096).EncodeRequest(fixture.Request),
             ])));
         await Assert.That(info.DecodeOwner(channel.Open(issued.EncodedBody)).IsDone).IsTrue();
-        var completion = new FdoTo2CompletionCodec();
         var selectedHmac = replacement
             ? new FdoHashValue(FdoHashAlgorithm.HmacSha256, Enumerable.Repeat((byte)0xA5, 32).ToArray())
             : null;
-        ReadOnlyMemory<byte> done = completion.EncodeDone(doneNonce, selectedHmac);
-        FdoTo2CompletionCodec.Done20 decodedDone = completion.DecodeDone(done);
+        ReadOnlyMemory<byte> done = FdoTo2CompletionCodec.EncodeDone(doneNonce, selectedHmac);
+        FdoTo2CompletionCodec.Done20 decodedDone = FdoTo2CompletionCodec.DecodeDone(done);
         await Assert.That(decodedDone.Nonce.Span.SequenceEqual(doneNonce)).IsTrue();
         await Assert.That(decodedDone.Nonce.Span.SequenceEqual(readyNonce)).IsFalse();
         await Assert.That(decodedDone.ReplacementHmac is not null).IsEqualTo(replacement);
         FdoOwnerResponse ack = await SendOwnerAsync(owner, FdoTo2MessageType.Done20, channel.Seal(done));
-        await Assert.That(completion.DecodeDoneAck(channel.Open(ack.EncodedBody)).Span
+        await Assert.That(FdoTo2CompletionCodec.DecodeDoneAck(channel.Open(ack.EncodedBody)).Span
             .SequenceEqual(readyNonce)).IsTrue();
         await Assert.That(owner.DoneAckHandoffConfirmed).IsTrue();
         await Assert.That(owner.CommittedEnrollment).IsNotNull();
@@ -4492,11 +4504,11 @@ public sealed class FdoPairedTo2SessionTests
 
     public enum ForgedProof
     {
-        RedirectOnly,
-        ReuseWithDisable,
-        ForeignOwner,
-        WrongSigner,
-        TamperedEntry,
+        RedirectOnly = 0,
+        ReuseWithDisable = 1,
+        ForeignOwner = 2,
+        WrongSigner = 3,
+        TamperedEntry = 4,
     }
 
     [Test]
@@ -4538,7 +4550,8 @@ public sealed class FdoPairedTo2SessionTests
                 byte[] body = message.Body.ToArray();
                 body[^1] ^= 0x01;
                 return message with { Body = body };
-            },
+            }
+            ,
         };
 
         Exception failure = await CatchAsync<Exception>(fixture.RunAsync);
@@ -4571,7 +4584,7 @@ public sealed class FdoPairedTo2SessionTests
 
     private static Func<FdoPairedMessage, int, FdoPairedMessage> ResignOwnerProof(
         IReadOnlyList<ReadOnlyMemory<byte>> chain, ECDsa signer) =>
-        (message, count) =>
+        (message, _) =>
         {
             if (message.Type != 83)
             {
@@ -4898,13 +4911,13 @@ public sealed class FdoPairedTo2SessionTests
 
     public enum RedirectFailure
     {
-        ForeignAnchor,
-        WrongSigner,
-        Tampered,
-        MissingRedirect,
-        ExpiredAtRedirectTime,
-        HostDenied,
-        Canceled,
+        ForeignAnchor = 0,
+        WrongSigner = 1,
+        Tampered = 2,
+        MissingRedirect = 3,
+        ExpiredAtRedirectTime = 4,
+        HostDenied = 5,
+        Canceled = 6,
     }
 
     [Test]
@@ -5217,6 +5230,8 @@ public sealed class FdoPairedTo2SessionTests
     /// Drives a scripted Device through SetupDevice20 and returns the live
     /// channel before the first DeviceSvcInfo20 is sent.
     /// </summary>
+    /// <param name="fixture">The scripted device and its credentials.</param>
+    /// <param name="owner">The owner session to advance.</param>
     private static async Task<OwnerServiceInfo> OpenOwnerServiceInfoAsync(Fixture fixture, FdoOwnerSession owner)
     {
         var initial = new FdoTo2InitialCodec();
@@ -5264,7 +5279,7 @@ public sealed class FdoPairedTo2SessionTests
     }
 
     private static async Task<FdoErrorMessageCodec.ErrorMessage> ExpectOwnerErrorAsync(
-        FdoOwnerSession owner, IFdoTo2PairedChannel channel, FdoTo2MessageType type,
+        FdoOwnerSession owner, FdoTo2PairedAeadChannel channel, FdoTo2MessageType type,
         ReadOnlyMemory<byte> body, ushort expectedCode)
     {
         FdoOwnerResponse response = await owner.ProcessAsync(200, type, body);
@@ -5428,7 +5443,7 @@ public sealed class FdoPairedTo2SessionTests
             serverRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
             serverRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
             serverRequest.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
-                new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") }, false));
+                [new Oid("1.3.6.1.5.5.7.3.1")], false));
             var names = new SubjectAlternativeNameBuilder();
             if (matchingName)
             {
@@ -5477,7 +5492,6 @@ public sealed class FdoPairedTo2SessionTests
 
     private sealed class Fixture : IDisposable, IFdoDeviceEnrollmentHandler, IFdoDeviceServerKeygenHandler
     {
-        private readonly ECDsa _enrollmentKey;
         private readonly X509Certificate2 _issuedCertificate;
         private byte[]? _caCrl;
 
@@ -5487,10 +5501,10 @@ public sealed class FdoPairedTo2SessionTests
             FdoCoseAeadAlgorithm cipher = FdoCoseAeadAlgorithm.A128Gcm)
         {
             Auth = new AuthenticationFixture(curveSize, exchange, cipher);
-            _enrollmentKey = ECDsa.Create(
+            EnrollmentKey = ECDsa.Create(
                 curveSize == 256 ? ECCurve.NamedCurves.nistP256 : ECCurve.NamedCurves.nistP384);
             var request = new CertificateRequest(
-                "CN=FDO enrollment", _enrollmentKey,
+                "CN=FDO enrollment", EnrollmentKey,
                 curveSize == 256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA384);
             Request = request.CreateSigningRequest();
             _issuedCertificate = request.Create(
@@ -5514,7 +5528,7 @@ public sealed class FdoPairedTo2SessionTests
         public AuthenticationFixture Auth { get; }
         public byte[] Request { get; set; }
         public byte[] Certificate { get; }
-        public ECDsa EnrollmentKey => _enrollmentKey;
+        public ECDsa EnrollmentKey { get; }
         public List<string> Events { get; } = [];
         public RecordingHandler Handler { get; }
         public RecordingCaHandler CaHandler { get; }
@@ -5837,7 +5851,7 @@ public sealed class FdoPairedTo2SessionTests
             DeviceSession?.Dispose();
             Session?.Dispose();
             _issuedCertificate.Dispose();
-            _enrollmentKey.Dispose();
+            EnrollmentKey.Dispose();
             Auth.Dispose();
         }
     }
@@ -5909,20 +5923,18 @@ public sealed class FdoPairedTo2SessionTests
     {
         private readonly Fixture _fixture;
         private readonly IFdoDeviceInitializeHmacSecret _secret;
-        private readonly FdoManufacturerInitializeSession _manufacturer;
-        private readonly FdoDeviceInitializeSession _device;
         private FdoDeviceInitializeCredential? _stagedCredential;
 
         public InitializationFixture(Fixture fixture, IFdoDeviceInitializeHmacSecret secret)
         {
             _fixture = fixture;
             _secret = secret;
-            _manufacturer = new FdoManufacturerInitializeSession(new FdoManufacturerInitializeOptions
+            Manufacturer = new FdoManufacturerInitializeSession(new FdoManufacturerInitializeOptions
             {
                 Handler = this,
                 UseVoucherHeaderHmac = true,
             });
-            _device = new FdoDeviceInitializeSession(new FdoDeviceInitializeOptions
+            Device = new FdoDeviceInitializeSession(new FdoDeviceInitializeOptions
             {
                 AttestationKey = fixture.Auth.DeviceSigningKey,
                 Handler = this,
@@ -5932,12 +5944,12 @@ public sealed class FdoPairedTo2SessionTests
 
         public FdoManufacturerInitializeVoucher? Voucher { get; private set; }
         public FdoDeviceInitializeCredential? InstalledCredential { get; private set; }
-        public FdoManufacturerInitializeSession Manufacturer => _manufacturer;
-        public FdoDeviceInitializeSession Device => _device;
+        public FdoManufacturerInitializeSession Manufacturer { get; }
+        public FdoDeviceInitializeSession Device { get; }
         public Uri? AuthorizedHttpAddress { get; set; }
         public ReadOnlyMemory<byte>? EncodedRendezvousInfo { get; set; }
 
-        public Task<FdoDeviceInitializeCredential> RunAsync() => _device.RunAsync(this).AsTask();
+        public Task<FdoDeviceInitializeCredential> RunAsync() => Device.RunAsync(this).AsTask();
 
         public ValueTask<IFdoDeviceInitializeHmacSecret> AuthorizeAndReserveAsync(
             Guid runId, IFdoDeviceInitializeTransport transport, CancellationToken cancellationToken)
@@ -5999,13 +6011,13 @@ public sealed class FdoPairedTo2SessionTests
             ReadOnlyMemory<byte> encodedBody,
             CancellationToken cancellationToken)
         {
-            FdoDeviceInitializeResponse response = await _manufacturer.ProcessAsync(
+            FdoDeviceInitializeResponse response = await Manufacturer.ProcessAsync(
                 protocolVersion, messageType, encodedBody, cancellationToken);
-            _manufacturer.ConfirmResponseSent();
+            Manufacturer.ConfirmResponseSent();
             return response;
         }
 
-        public void Dispose() => _manufacturer.Dispose();
+        public void Dispose() => Manufacturer.Dispose();
     }
 
     private sealed class RecordingServerKeygenHandler(Fixture fixture) : IFdoOwnerServerKeygenHandler
@@ -6448,7 +6460,7 @@ public sealed class FdoPairedTo2SessionTests
             LeafKey = _keys[^1];
         }
 
-        public IReadOnlyList<ReadOnlyMemory<byte>> Encoded { get; }
+        public ReadOnlyMemory<byte>[] Encoded { get; }
         public ECDsa LeafKey { get; }
 
         public void Dispose()

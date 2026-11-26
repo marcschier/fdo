@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -6,14 +8,14 @@ namespace Fdo.Cryptography;
 
 internal enum FdoAsymSuite
 {
-    Asym2048,
-    Asym3072,
+    Asym2048 = 0,
+    Asym3072 = 1,
 }
 
 internal enum FdoAsymParty
 {
-    Device,
-    Owner,
+    Device = 0,
+    Owner = 1,
 }
 
 /// <summary>
@@ -51,6 +53,14 @@ internal sealed class FdoAsymKeyExchange : IFdoPairedKeyExchange
     /// Creates a Device exchange using a provisioned Owner public key, or an
     /// Owner exchange using its private key. The caller retains key ownership.
     /// </summary>
+    /// <param name="suite">The selected cryptographic suite.</param>
+    /// <param name="party">The participant whose contribution is being processed.</param>
+    /// <param name="ownerKey">The Owner public key that anchors verification.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The RSA Owner key does not match the exchange suite.</exception>
+    /// <exception cref="CryptographicException">
+    /// The RSA Owner key does not match the exchange suite. The RSA provider returned a ciphertext of an unexpected
+    /// length.
+    /// </exception>
     public static FdoAsymKeyExchange Create(FdoAsymSuite suite, FdoAsymParty party, RSA ownerKey)
     {
         ArgumentNullException.ThrowIfNull(ownerKey);
@@ -112,6 +122,11 @@ internal sealed class FdoAsymKeyExchange : IFdoPairedKeyExchange
     /// Consumes the exchange even on failure. Returns DeviceRandom as ShSe and
     /// OwnerRandom as ContextRand. The caller owns and must clear both arrays.
     /// </summary>
+    /// <param name="peerParameter">The peer's contribution to the negotiated key exchange.</param>
+    /// <param name="contextRand">The random bytes included in the key derivation context.</param>
+    /// <exception cref="CryptographicException">
+    /// The decrypted ASYMKEX random has an invalid length. The peer ASYMKEX parameter has an invalid length.
+    /// </exception>
     public byte[] DeriveSharedSecret(ReadOnlySpan<byte> peerParameter, out byte[] contextRand)
     {
         lock (_sync)

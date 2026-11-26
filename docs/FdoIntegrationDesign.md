@@ -943,8 +943,10 @@ published erratum or interoperability evidence.
   response gives its first index and the snapshot's total count. The server
   does not add preferences to a signed blob. The server accepts known 1.x
   version bits alongside 2.0 in a received Hello, then selects only 2.0.
-  Client acknowledgements and `OwnerSign` still require the exact paired
-  flags, and vendor extensions are not enabled. These choices do not
+  The Device accepts the same known version bits in `TO1.HelloRVAck`
+  and continues on 2.0. It uses delegation only if requested and advertised
+  by both sides. TO0 acknowledgements and `OwnerSign` still require the
+  exact paired flags, and vendor extensions are not enabled. These choices do not
   resolve the specification's conflicting address and instruction forms.
   The parser rejects unsupported instructions applicable to the role;
   `ParseDirectives` accepts delays, but `Parse` still rejects them. Owners use HTTPS
@@ -1284,8 +1286,10 @@ or other recovery protocol absent from the specification.
 The package is not to be published and the repository is not to become public
 until the library is fully implemented and reviewed. Creating package metadata
 in this scaffold does not authorize a package push or repository-visibility
-change. Any later interoperability or conformance statement must be supported
-by role-specific protocol, cryptographic, transport, and interoperability
+change. The project is licensed under the [MIT License](../LICENSE). Check the
+redistribution notices for any third-party material shipped with the release.
+Any later interoperability or conformance statement must be supported by
+role-specific protocol, cryptographic, transport, and interoperability
 validation.
 
 ## Sources

@@ -1,4 +1,7 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,6 +24,8 @@ namespace Fdo.Enrollment;
 public interface IFdoDeviceDelegateAcceptance
 {
     /// <summary>Returns true to continue the run with this Delegate.</summary>
+    /// <param name="evidence">The verified protocol evidence for the host's decision.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<bool> AcceptAsync(FdoDelegateEvidence evidence, CancellationToken cancellationToken);
 }
 
@@ -70,6 +75,7 @@ public sealed class FdoDelegateEvidence
 }
 
 /// <summary>The Device host did not accept the Delegate that signed the Owner proof.</summary>
+[SuppressMessage("Roslynator", "RCS1194", Justification = "This exception always reports the same rejection reason.")]
 public sealed class FdoDelegateNotAcceptedException : InvalidOperationException
 {
     /// <summary>Creates the exception.</summary>

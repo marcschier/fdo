@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -54,10 +56,17 @@ public sealed class FdoHttpServerRequest
         init => _observedSource = CopyAddress(value);
     }
 
-    private static IPAddress? CopyAddress(IPAddress? address) => address is null ? null :
-        address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+    private static IPAddress? CopyAddress(IPAddress? address)
+    {
+        if (address is null)
+        {
+            return null;
+        }
+
+        return address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
             ? new IPAddress(address.GetAddressBytes(), address.ScopeId)
             : new IPAddress(address.GetAddressBytes());
+    }
 }
 
 /// <summary>A detached HTTP response for one paired FDO request.</summary>
@@ -149,8 +158,8 @@ public sealed class FdoHttpServerSession : IDisposable
 
         if (pathPrefix.Length > 1024 ||
             (pathPrefix.Length != 0 &&
-             (!pathPrefix.StartsWith("/", StringComparison.Ordinal) ||
-              pathPrefix.EndsWith("/", StringComparison.Ordinal) ||
+             (!pathPrefix.StartsWith('/') ||
+              pathPrefix.EndsWith('/') ||
               pathPrefix.Contains("//", StringComparison.Ordinal) ||
               pathPrefix.IndexOfAny(['?', '#', '\\', '\r', '\n']) >= 0)))
         {
@@ -167,6 +176,9 @@ public sealed class FdoHttpServerSession : IDisposable
     }
 
     /// <summary>Creates a binding that owns one Owner TO2 session.</summary>
+    /// <param name="owner">The Owner session for this exchange.</param>
+    /// <param name="maxRequestBytes">The maximum encoded request body size, in bytes.</param>
+    /// <param name="pathPrefix">The optional escaped prefix of the raw HTTP request target.</param>
     public static FdoHttpServerSession ForOwner(
         FdoOwnerSession owner, int maxRequestBytes = ushort.MaxValue, string pathPrefix = "")
     {
@@ -183,6 +195,9 @@ public sealed class FdoHttpServerSession : IDisposable
     }
 
     /// <summary>Creates a binding that owns one manufacturer DI session.</summary>
+    /// <param name="manufacturer">The Manufacturer session bound to the exchange.</param>
+    /// <param name="maxRequestBytes">The maximum encoded request body size, in bytes.</param>
+    /// <param name="pathPrefix">The optional escaped prefix of the raw HTTP request target.</param>
     public static FdoHttpServerSession ForManufacturer(
         FdoManufacturerInitializeSession manufacturer, int maxRequestBytes = ushort.MaxValue, string pathPrefix = "")
     {
@@ -199,6 +214,9 @@ public sealed class FdoHttpServerSession : IDisposable
     }
 
     /// <summary>Creates a binding that owns one TO0 or TO1 Rendezvous Server session.</summary>
+    /// <param name="server">The server session bound to this exchange.</param>
+    /// <param name="maxRequestBytes">The maximum encoded request body size, in bytes.</param>
+    /// <param name="pathPrefix">The optional escaped prefix of the raw HTTP request target.</param>
     public static FdoHttpServerSession ForRendezvous(
         FdoRendezvousServerSession server, int maxRequestBytes = ushort.MaxValue, string pathPrefix = "")
     {
@@ -223,6 +241,12 @@ public sealed class FdoHttpServerSession : IDisposable
     /// Processes a request and returns its response without confirming handoff.
     /// A failure after a request is admitted ends this binding.
     /// </summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Confirm the previous response handoff before another request. The HTTP server session is already processing a
+    /// request. The paired role returned an invalid FDO response.
+    /// </exception>
     public async ValueTask<FdoHttpServerResponse> ProcessAsync(
         FdoHttpServerRequest request, CancellationToken cancellationToken = default)
     {
@@ -290,6 +314,9 @@ public sealed class FdoHttpServerSession : IDisposable
     }
 
     /// <summary>Records a successful response handoff, not peer receipt.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// No HTTP response is awaiting handoff. The HTTP server session is already processing a request.
+    /// </exception>
     public void ConfirmResponseSent()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)
@@ -333,6 +360,7 @@ public sealed class FdoHttpServerSession : IDisposable
     }
 
     /// <summary>Ends the binding and its role without changing host storage.</summary>
+    /// <exception cref="InvalidOperationException">The HTTP server session is already processing a request.</exception>
     public void Dispose()
     {
         if (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)

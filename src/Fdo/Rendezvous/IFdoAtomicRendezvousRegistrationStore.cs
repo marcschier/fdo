@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -19,6 +21,8 @@ namespace Fdo.Rendezvous;
 public interface IFdoAtomicRendezvousRegistrationStore
 {
     /// <summary>Reads one consistent snapshot with all live records for the Device.</summary>
+    /// <param name="deviceId">The Device identity associated with the operation.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// Use the adapter's trusted clock. A record is live only while the clock
     /// is strictly earlier than its expiry. Return the current revision even
@@ -29,7 +33,10 @@ public interface IFdoAtomicRendezvousRegistrationStore
         Guid deviceId, CancellationToken cancellationToken);
 
     /// <summary>Conditionally writes one record and its mutation receipt.</summary>
+    /// <param name="mutation">The proposed atomic change to the registration.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
+    /// <para>
     /// In one transaction check the receipt, expected revision, expiry,
     /// replacement authorization and storage limits, then write the record,
     /// the new revision (the incoming registration ID), and the receipt.
@@ -39,18 +46,22 @@ public interface IFdoAtomicRendezvousRegistrationStore
     /// mutation authorizes replacing that exact registration ID. After
     /// expiry a slot is vacant, but the revision still fences stale writers.
     /// A mutation with an expired incoming record must not commit.
-    ///
+    /// </para>
+    /// <para>
     /// Return <see cref="FdoRendezvousMutationResult.Applied"/> only after the
     /// commit is durable or if a durable receipt already matches the exact
     /// mutation. Compare every input, including original encoded bytes,
     /// normalized address, identity, expiry, authorization and expected
     /// revision; reusing the ID with different inputs is a conflict. An
     /// exception or cancellation does not prove that the mutation rolled back.
+    /// </para>
     /// </remarks>
     ValueTask<FdoRendezvousMutationResult> TryWriteAsync(
         FdoRendezvousRegistrationMutation mutation, CancellationToken cancellationToken);
 
     /// <summary>Checks whether the exact mutation is known to have committed.</summary>
+    /// <param name="mutation">The proposed atomic change to the registration.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// A successful receipt remains queryable after replacement and expiry
     /// throughout the host's reconciliation window, which must cover all
@@ -168,6 +179,8 @@ public sealed class FdoRendezvousRegistrationMutation
 public sealed class FdoRendezvousRegistrationSnapshot
 {
     /// <summary>Snapshots one view returned by the host store.</summary>
+    /// <param name="revision">The revision of the registration to compare or update.</param>
+    /// <param name="records">The ordered registration snapshot.</param>
     public FdoRendezvousRegistrationSnapshot(Guid? revision, IReadOnlyList<FdoRendezvousRegistrationRecord> records)
     {
         ArgumentNullException.ThrowIfNull(records);
@@ -207,20 +220,20 @@ public sealed class FdoRendezvousRegistrationSnapshot
 public enum FdoRendezvousMutationResult
 {
     /// <summary>No mutation was applied because the expected revision was stale.</summary>
-    RevisionConflict,
+    RevisionConflict = 0,
 
     /// <summary>The exact mutation committed durably.</summary>
-    Applied,
+    Applied = 1,
 
     /// <summary>The write was denied because it would replace a live record without authorization.</summary>
-    ReplacementNotAuthorized,
+    ReplacementNotAuthorized = 2,
 
     /// <summary>The incoming record expired before the write.</summary>
-    Expired,
+    Expired = 3,
 
     /// <summary>Host storage limits prevented the write.</summary>
-    CapacityExceeded,
+    CapacityExceeded = 4,
 
     /// <summary>The registration ID already identifies a different committed mutation.</summary>
-    MutationIdConflict,
+    MutationIdConflict = 5,
 }

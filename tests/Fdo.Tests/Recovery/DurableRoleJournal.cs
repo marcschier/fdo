@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -5,8 +7,10 @@ using System.Text.Json;
 
 namespace Fdo.Tests.Recovery;
 
-// Test adapter. Reopening must read the journal from disk; the lock models
-// one storage authority in this process, not cross-process or power-loss safety.
+/// <summary>
+/// Test adapter. Reopening must read the journal from disk; the lock models
+/// one storage authority in this process, not cross-process or power-loss safety.
+/// </summary>
 internal sealed class DurableRoleJournal : IDisposable
 {
     private readonly string _path = Path.Combine(Path.GetTempPath(), $"fdo-role-{Guid.NewGuid():N}.json");

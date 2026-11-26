@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -679,14 +681,14 @@ public sealed class FdoDeviceInitializeSessionTests
     public async Task BothRolesRequireExplicitSelectionOfTheHeaderHmacConvention()
     {
         using var fixture = new Fixture();
-        await Assert.That(Throws<InvalidOperationException>(() => new FdoDeviceInitializeSession(
+        await Assert.That(Throws<InvalidOperationException>(() => _ = new FdoDeviceInitializeSession(
             new FdoDeviceInitializeOptions
             {
                 AttestationKey = fixture.DeviceKey,
                 Handler = fixture,
                 UseVoucherHeaderHmac = false,
             }))).IsTrue();
-        await Assert.That(Throws<InvalidOperationException>(() => new FdoManufacturerInitializeSession(
+        await Assert.That(Throws<InvalidOperationException>(() => _ = new FdoManufacturerInitializeSession(
             new FdoManufacturerInitializeOptions
             {
                 Handler = fixture,

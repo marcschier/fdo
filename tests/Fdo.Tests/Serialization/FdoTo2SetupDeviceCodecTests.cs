@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.InteropServices;
@@ -351,9 +353,7 @@ public sealed class FdoTo2SetupDeviceCodecTests
         byte[] rendezvous = ReplacementRendezvous("rvserver.local");
         byte[] nonce = ReplacementNonce();
         ReadOnlyMemory<byte> key = new FdoPublicKeyCodec().Encode(owner2);
-        byte[][] invalidGuids = [Array.Empty<byte>(), new byte[15], new byte[17], fixture.Voucher.Guid];
-
-        foreach (byte[] guid in invalidGuids)
+        foreach (byte[] guid in (byte[][])[Array.Empty<byte>(), new byte[15], new byte[17], fixture.Voucher.Guid])
         {
             ReadOnlyMemory<byte> signed = SignPayload(owner2, ReplacementPayload(rendezvous, guid, nonce, key));
             await Assert.That(Throws<CborContentException>(() =>

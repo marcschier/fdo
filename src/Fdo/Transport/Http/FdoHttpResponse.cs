@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using Fdo.Serialization;
 
@@ -11,18 +13,18 @@ internal enum FdoHttpResponseKind
     /// <summary>
     /// HTTP 200 carrying the next protocol message.
     /// </summary>
-    Message,
+    Message = 0,
 
     /// <summary>
     /// HTTP 500 carrying an FDO Error message (§5.1.1). The session is terminated.
     /// </summary>
-    Error,
+    Error = 1,
 
     /// <summary>
     /// HTTP 302 or 307 in answer to TO1.HelloRV (§5.4.1). The session is
     /// terminated and the host decides whether to start another TO1 run.
     /// </summary>
-    Redirect,
+    Redirect = 2,
 }
 
 /// <summary>

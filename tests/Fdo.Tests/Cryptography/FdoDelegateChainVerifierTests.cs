@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -20,7 +22,7 @@ public sealed class FdoDelegateChainVerifierTests
         FdoDelegateChainVerifier.OnboardDisableOid,
     };
 
-    private static readonly FdoDelegatePermissions Every = FdoDelegatePermissions.Redirect |
+    private const FdoDelegatePermissions Every = FdoDelegatePermissions.Redirect |
         FdoDelegatePermissions.OnboardNewCredentials | FdoDelegatePermissions.OnboardReuseCredentials |
         FdoDelegatePermissions.OnboardDisable;
 
@@ -241,8 +243,11 @@ public sealed class FdoDelegateChainVerifierTests
 
         Exception? unpermitted = Capture(() => verified.Require(FdoDelegatePermissions.OnboardReuseCredentials));
 
-        await Assert.That(unpermitted is FdoDelegateNotPermittedException { Required:
-            FdoDelegatePermissions.OnboardReuseCredentials }).IsTrue();
+        await Assert.That(unpermitted is FdoDelegateNotPermittedException
+        {
+            Required:
+            FdoDelegatePermissions.OnboardReuseCredentials
+        }).IsTrue();
         await Assert.That(Reason(() => Verifier().Verify(Memories(tampered), fixture.OwnerKey, Now)))
             .IsEqualTo(FdoDelegateChainFailure.HopSignature);
     }
@@ -286,7 +291,10 @@ public sealed class FdoDelegateChainVerifierTests
                 specs[2] = specs[2] with { UnknownCritical = true };
                 break;
             case "critical-policies":
-                specs[1] = specs[1] with { Extra = new[] { Raw("2.5.29.32", true, 0x30, 0x00) } };
+                specs[1] = specs[1] with
+                {
+                    Extra = [Raw("2.5.29.32", true, 0x30, 0x08, 0x30, 0x06, 0x06, 0x04, 0x2A, 0x03, 0x04, 0x05)]
+                };
                 break;
             case "duplicate-subject":
                 specs[1] = specs[1] with { Name = specs[0].Name };
@@ -503,11 +511,11 @@ public sealed class FdoDelegateChainVerifierTests
         await Assert.That(Reason(() => Verifier().Verify(Array.Empty<ReadOnlyMemory<byte>>(), fixture.OwnerKey, Now)))
             .IsEqualTo(FdoDelegateChainFailure.ChainBounds);
         await Assert.That(Throws<NotSupportedException>(() =>
-            new FdoDelegateChainVerifier(X509RevocationMode.Online))).IsTrue();
+            _ = new FdoDelegateChainVerifier(X509RevocationMode.Online))).IsTrue();
         await Assert.That(Throws<NotSupportedException>(() =>
-            new FdoDelegateChainVerifier(X509RevocationMode.Offline))).IsTrue();
+            _ = new FdoDelegateChainVerifier(X509RevocationMode.Offline))).IsTrue();
         await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-            new FdoDelegateChainVerifier((X509RevocationMode)7))).IsTrue();
+            _ = new FdoDelegateChainVerifier((X509RevocationMode)7))).IsTrue();
     }
 
     private static FdoDelegateChainVerifier Verifier() => new(X509RevocationMode.NoCheck);
@@ -648,6 +656,14 @@ public sealed class FdoDelegateChainVerifierTests
         where TException : Exception => Capture(action) is TException;
 
     /// <summary>A certificate description; specs are ordered from the Owner-signed certificate to the leaf.</summary>
+    /// <param name="Name">The certificate subject's common name.</param>
+    /// <param name="Ca">Whether the certificate is a CA.</param>
+    /// <param name="PathLength">The optional CA path length constraint.</param>
+    /// <param name="KeyUsage">The optional key usage flags.</param>
+    /// <param name="Ekus">The optional extended key usage OIDs.</param>
+    /// <param name="UnknownCritical">Whether to include an unknown critical extension.</param>
+    /// <param name="NotBefore">The start of the certificate validity period.</param>
+    /// <param name="NotAfter">The end of the certificate validity period.</param>
     private sealed record Spec(
         string Name,
         bool Ca,
@@ -677,7 +693,7 @@ public sealed class FdoDelegateChainVerifierTests
     private sealed class ChainFixture : IDisposable
     {
         private readonly AsymmetricAlgorithm _owner;
-        private readonly List<ECDsa> _keys = new();
+        private readonly List<ECDsa> _keys = [];
 
         public ChainFixture(string ownerType)
         {
@@ -698,6 +714,7 @@ public sealed class FdoDelegateChainVerifierTests
         public ECDsa LeafKey => _keys[^1];
 
         /// <summary>Returns the chain leaf first, as carried in an X5CHAIN.</summary>
+        /// <param name="specs">The certificates to issue, starting with the Owner-signed certificate.</param>
         public byte[][] Build(IReadOnlyList<Spec> specs)
         {
             var encoded = new byte[specs.Count][];

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography;
 using System.Threading;
@@ -33,6 +35,8 @@ public sealed class FdoOwnerReplacementOptions
 public interface IFdoOwnerReplacementHandler
 {
     /// <summary>Durably commits the exact replacement voucher.</summary>
+    /// <param name="replacement">The options or evidence for replacing the Device credential.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask CommitAsync(FdoOwnerReplacementCommit replacement, CancellationToken cancellationToken);
 }
 
@@ -93,13 +97,19 @@ public sealed class FdoOwnerReplacementCommit
 public interface IFdoDeviceReplacementHandler
 {
     /// <summary>Reserves a fresh protected HMAC secret for the proposal.</summary>
+    /// <param name="proposal">The manufacturer's proposed voucher header and Device certificate chain.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<IFdoDeviceInitializeHmacSecret> ReserveSecretAsync(
         FdoDeviceReplacementProposal proposal, CancellationToken cancellationToken);
 
     /// <summary>Durably stages the proposal and secret without replacing the active credential.</summary>
+    /// <param name="credential">The Device credential for this operation.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask StageAsync(FdoDeviceReplacementCredential credential, CancellationToken cancellationToken);
 
     /// <summary>Atomically installs the staged credential after authenticated DoneAck20.</summary>
+    /// <param name="credential">The Device credential for this operation.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask ActivateAsync(FdoDeviceReplacementCredential credential, CancellationToken cancellationToken);
 }
 

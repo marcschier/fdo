@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -10,8 +12,18 @@ namespace Fdo.Tests.Cryptography;
 [UnsupportedOSPlatform("browser")]
 public sealed class FdoCoseAeadTests
 {
-    // NIST CAVP GCM EncryptExtIV, key sizes 128/256, IV 96, PT/AAD/tag 128, count 0.
-    // NIST ACVP AES-CCM internalProjection groups 2, 70, 206, and 220.
+    /// <summary>
+    /// NIST CAVP GCM EncryptExtIV, key sizes 128/256, IV 96, PT/AAD/tag 128, count 0.
+    /// NIST ACVP AES-CCM internalProjection groups 2, 70, 206, and 220.
+    /// </summary>
+    /// <param name="algorithm">The COSE algorithm identifier.</param>
+    /// <param name="keyHex">The AES key in hexadecimal.</param>
+    /// <param name="nonceHex">The nonce in hexadecimal.</param>
+    /// <param name="plaintextHex">The plaintext in hexadecimal.</param>
+    /// <param name="aadHex">The associated data in hexadecimal.</param>
+    /// <param name="ciphertextHex">The expected ciphertext in hexadecimal.</param>
+    /// <param name="tagHex">The expected authentication tag in hexadecimal.</param>
+    /// <returns>A task that completes after the vector assertions.</returns>
     [Test]
     [Arguments(1,
         "C939CC13397C1D37DE6AE0E1CB7C423C",
@@ -90,7 +102,7 @@ public sealed class FdoCoseAeadTests
     [Test]
     public async Task EmptyPlaintextStillAuthenticatesAssociatedData()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         byte[] key = Convert.FromHexString("4B2CBE2158F5D6A28CC798DF4F99F777");
         byte[] nonce = Convert.FromHexString("3851BAF79831605B75086E79");
         byte[] associatedData = Convert.FromHexString("4607F76F4FDA85DAFDC8CE085E0CE5");
@@ -156,7 +168,7 @@ public sealed class FdoCoseAeadTests
     [Test]
     public async Task RejectsIncorrectAlgorithmLengthsAndOverlappingBuffers()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         byte[] key = new byte[16];
         byte[] nonce = new byte[12];
         byte[] input = Enumerable.Repeat((byte)0xA5, 16).ToArray();
@@ -188,7 +200,7 @@ public sealed class FdoCoseAeadTests
     [Test]
     public async Task Ccm16Accepts65535BytesAndRejects65536()
     {
-        var algorithm = FdoCoseAeadAlgorithm.AesCcm16_128_128;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.AesCcm16_128_128;
         byte[] key = new byte[16];
         byte[] nonce = new byte[13];
         byte[] plaintext = new byte[ushort.MaxValue];

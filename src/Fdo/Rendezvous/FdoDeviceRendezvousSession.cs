@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -152,6 +154,7 @@ public sealed class FdoDeviceRendezvousSession
     internal bool IsStarted => Volatile.Read(ref _started) != 0;
 
     /// <summary>Snapshots the Device GUID and checks the attestation key type.</summary>
+    /// <param name="options">The configuration for this operation.</param>
     public FdoDeviceRendezvousSession(FdoDeviceRendezvousOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -175,6 +178,8 @@ public sealed class FdoDeviceRendezvousSession
     }
 
     /// <summary>Performs TO1 once and returns an untrusted Owner candidate.</summary>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     public async ValueTask<FdoDeviceRendezvousResult> RunAsync(
         IFdoRendezvousTransport transport,
         CancellationToken cancellationToken = default)
@@ -185,7 +190,13 @@ public sealed class FdoDeviceRendezvousSession
     }
 
     /// <summary>Caches all pages of one delegated TO1 lookup before returning untrusted blobs for host selection.</summary>
+    /// <param name="transport">The exchange transport bound to the peer for this run.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>No page is returned early, and no page request is retried automatically.</remarks>
+    /// <exception cref="InvalidOperationException">A TO1 batch requires delegated discovery.</exception>
+    /// <exception cref="CborContentException">
+    /// The TO1 redirect page does not start at the expected index. The total TO1 redirect count changed between pages.
+    /// </exception>
     public async ValueTask<IReadOnlyList<FdoDeviceRendezvousResult>> RunBatchAsync(
         IFdoRendezvousTransport transport, CancellationToken cancellationToken = default)
     {
@@ -240,13 +251,7 @@ public sealed class FdoDeviceRendezvousSession
         ReadOnlyMemory<byte> ack = await FdoRendezvousExchange.SendAsync(
             transport, FdoRendezvousMessageType.DeviceHello, hello,
             FdoRendezvousMessageType.DeviceHelloAck, _maxMessageSize, cancellationToken).ConfigureAwait(false);
-        var selection = _codec.ReadInitial(FdoMessageTypes.TO1HelloRVAck, ack, _delegated);
-        if (FdoRendezvousCodec.IsDelegated(selection.CapabilityFlags) != _delegated)
-        {
-            throw new NotSupportedException("The Rendezvous Server did not select the requested TO1 capability.");
-        }
-
-        ReadOnlyMemory<byte> nonce = selection.GuidOrNonce!.Value;
+        ReadOnlyMemory<byte> nonce = _codec.ReadDeviceHelloAck(ack, requiresDelegation: _delegated);
         ReadOnlyMemory<byte> proof = _codec.SignDeviceProof(_guid, nonce, _attestationKey);
         return await FdoRendezvousExchange.SendAsync(
             transport, FdoRendezvousMessageType.ProveToRendezvous, proof,

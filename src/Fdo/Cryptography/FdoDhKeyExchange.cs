@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -6,8 +8,8 @@ namespace Fdo.Cryptography;
 
 internal enum FdoDhGroup
 {
-    DhkexId14,
-    DhkexId15,
+    DhkexId14 = 0,
+    DhkexId15 = 1,
 }
 
 /// <summary>
@@ -62,6 +64,10 @@ internal sealed partial class FdoDhKeyExchange : IFdoPairedKeyExchange
     /// Consumes the ephemeral key even on failure. The caller must clear the
     /// returned secret and apply the FDO KDF before using it as key material.
     /// </summary>
+    /// <param name="peerParameter">The peer's contribution to the negotiated key exchange.</param>
+    /// <exception cref="CryptographicException">
+    /// The peer DH parameter has an invalid length. The peer DH public value matches the local ephemeral value.
+    /// </exception>
     public byte[] DeriveSharedSecret(ReadOnlySpan<byte> peerParameter)
     {
         lock (_sync)

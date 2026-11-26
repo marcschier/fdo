@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Net;
 using System.Threading;
@@ -9,6 +11,8 @@ namespace Fdo.Rendezvous;
 public interface IFdoRendezvousRegistrationAdmission
 {
     /// <summary>Returns a trusted storage identity and any explicit replacement permission, or null to deny.</summary>
+    /// <param name="evidence">The verified protocol evidence for the host's decision.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// The callback runs after voucher, nonce, redirect signature, and any
     /// Delegate permission checks. It does not write the store. A subsequent

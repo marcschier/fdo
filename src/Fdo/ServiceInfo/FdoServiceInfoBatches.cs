@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -27,14 +29,17 @@ internal static class FdoServiceInfoBatches
     /// </summary>
     public const int MaxAssembledBytes = ushort.MaxValue;
 
-    // A TO2 ServiceInfo plaintext wraps the ServiceInfo array in a three-field
-    // array whose header and two leading one-byte fields add three bytes.
+    /// <summary>
+    /// A TO2 ServiceInfo plaintext wraps the ServiceInfo array in a three-field
+    /// array whose header and two leading one-byte fields add three bytes.
+    /// </summary>
     private const int MessageOverhead = 3;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
     /// <summary>
     /// Returns the bytes one entry adds to an encoded ServiceInfo array.
     /// </summary>
+    /// <param name="entry">The entry to encode, process, or verify.</param>
     public static long GetFramedSize(Entry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -50,6 +55,10 @@ internal static class FdoServiceInfoBatches
     /// the plaintext limit and, once sealed, the peer's message limit. An empty
     /// list yields one empty message.
     /// </summary>
+    /// <param name="entries">The ordered entries for this operation.</param>
+    /// <param name="maxPlaintextBytes">The maximum plaintext message size, in bytes.</param>
+    /// <param name="sealedLength">The function that computes the encoded size after protection.</param>
+    /// <param name="maxSealedBytes">The maximum encoded protected message size, in bytes.</param>
     /// <exception cref="CborContentException">
     /// The transfer exceeds the assembly limits, or one entry cannot fit an
     /// otherwise empty message.
@@ -125,6 +134,10 @@ internal static class FdoServiceInfoBatches
 
         public int Count => _entries.Count;
 
+        /// <summary>
+        /// Appends a complete round without exceeding the transfer limits.
+        /// </summary>
+        /// <param name="entries">The entries received in this round.</param>
         /// <exception cref="CborContentException">The limits would be exceeded.</exception>
         public void Append(IReadOnlyList<Entry> entries)
         {

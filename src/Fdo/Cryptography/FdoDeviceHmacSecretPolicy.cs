@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography;
 
@@ -21,6 +23,7 @@ internal static class FdoDeviceHmacSecretPolicy
     /// Generates a software-held secret. The caller must persist it in
     /// protected storage and clear the returned buffer when it is no longer needed.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
     public static byte[] Generate(FdoHashAlgorithm algorithm) =>
         RandomNumberGenerator.GetBytes(GetRequiredLength(algorithm));
 
@@ -30,7 +33,7 @@ internal static class FdoDeviceHmacSecretPolicy
         if (actualLength != requiredLength)
         {
             throw new ArgumentException(
-                $"The Device HMAC secret must contain exactly {requiredLength} bytes.", "actualLength");
+                $"The Device HMAC secret must contain exactly {requiredLength} bytes.", nameof(actualLength));
         }
     }
 }

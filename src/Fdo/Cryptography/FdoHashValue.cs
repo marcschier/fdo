@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
@@ -7,8 +9,8 @@ namespace Fdo.Cryptography;
 
 internal enum FdoHashAlgorithm
 {
-    Sha256 = -16,
     Sha384 = -43,
+    Sha256 = -16,
     HmacSha256 = 5,
     HmacSha384 = 6,
 }

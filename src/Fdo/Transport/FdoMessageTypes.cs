@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 namespace Fdo.Transport;
 
 /// <summary>
@@ -86,6 +88,8 @@ internal static class FdoMessageTypes
     /// <paramref name="protocol"/>. The Error message is excluded because
     /// it has its own send path.
     /// </summary>
+    /// <param name="protocol">The selected FDO subprotocol.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
     public static bool IsRequest(FdoProtocolKind protocol, ushort messageType) => protocol switch
     {
         FdoProtocolKind.DeviceInitialize => messageType is DIAppStart or DISetHmac,
@@ -104,6 +108,8 @@ internal static class FdoMessageTypes
     /// Identifies requests that require unavailable TO2 session protection.
     /// ServiceInfo request bodies also have unresolved ReplacementHMac semantics.
     /// </summary>
+    /// <param name="protocol">The selected FDO subprotocol.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
     public static bool RequiresUnavailableTo2Protection(FdoProtocolKind protocol, ushort messageType) =>
         protocol == FdoProtocolKind.TransferOwnership2 &&
         messageType is TO2DeviceServiceInfoRdy20 or TO2DeviceSvcInfo20 or TO2Done20;
@@ -113,6 +119,8 @@ internal static class FdoMessageTypes
     /// <paramref name="messageType"/> as a successful response. The Error
     /// message is excluded because §5.1.1 carries it with HTTP status 500.
     /// </summary>
+    /// <param name="protocol">The selected FDO subprotocol.</param>
+    /// <param name="messageType">The numeric type of the FDO message.</param>
     public static bool IsResponse(FdoProtocolKind protocol, ushort messageType) => protocol switch
     {
         FdoProtocolKind.DeviceInitialize => messageType is DISetCredentials or DIDone,
