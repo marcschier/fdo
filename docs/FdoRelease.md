@@ -42,21 +42,24 @@ builds and pack from a clean commit, not a dirty worktree.
 
 ## Publication gates
 
-Local packing, managed CI, NativeAOT CI, and peer validation do not publish
-anything. Publication is disabled unless the owner explicitly approves it
-and enables `FDO_ENABLE_PUBLISHING`. Before enabling it, protect the
-`release` environment with required reviewers and deployment ref rules.
-Configure GitHub Packages access and an approved NuGet.org trusted-publishing
-policy for this repository, workflow, and environment. Do not change
-repository visibility as part of a package release.
+Local packing, pull requests, and ordinary branch CI do not publish packages.
+Before releasing, configure GitHub Packages access and the `release`
+environment. For NuGet.org, configure a [Trusted Publishing policy] for
+`marcschier/fdo`, workflow `nuget.yml`, environment `release`, with permission
+to publish `Fdo`. The first release needs permission to publish a new package.
+Set the `NUGET_USER` secret to the NuGet.org profile name, not an email address.
 
-GitHub Packages staging requires a version tag on a commit already in `main`
-with successful main CI. It verifies the tag against the inspected package
-before pushing. The manual NuGet.org workflow accepts only an exact staged
-version and runs only from `main`. It uses a short-lived trusted publishing
-token and never selects a latest version. Neither workflow is enabled by
-these files alone. Retain the `.snupkg` from the inspected build as the
-matching symbol artifact.
+1. Push a version tag such as `v0.1.0-preview` for a commit already in `main`.
+   Tag CI runs the managed and NativeAOT matrix, then verifies that the
+   packed version matches the tag and publishes it to GitHub Packages.
+   The workflow keeps the inspected package and symbols as a run artifact.
+2. Create the GitHub release from that existing tag after staging succeeds.
+   Mark prerelease versions as prereleases.
+3. Run **Promote Fdo to NuGet.org** from `main` with the exact staged version.
+   The workflow downloads that package from GitHub Packages and uses a
+   short-lived trusted publishing token to upload it without rebuilding.
 
 Review the [qualification limits](FdoQualification.md) and
 [changelog](../CHANGELOG.md) before approving any release.
+
+[Trusted Publishing policy]: https://learn.microsoft.com/nuget/nuget-org/trusted-publishing

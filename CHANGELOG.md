@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-preview
 
 - Add paired FDO 2.0 Device Initialize, voucher transfer, and direct and
   delegated Rendezvous exchanges.

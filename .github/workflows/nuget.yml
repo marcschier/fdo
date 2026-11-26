@@ -15,7 +15,7 @@ concurrency: fdo-nuget-promotion
 
 jobs:
   publish:
-    if: github.repository == 'marcschier/fdo' && github.ref == 'refs/heads/main' && vars.FDO_ENABLE_PUBLISHING == 'true'
+    if: github.repository == 'marcschier/fdo' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: release
@@ -42,7 +42,8 @@ jobs:
           base=$(curl -fsS --max-time 30 -H "$auth" https://nuget.pkg.github.com/marcschier/index.json \
             | jq -er '[.resources[] | select(."@type" == "PackageBaseAddress/3.0.0") | ."@id"][0]')
           [[ "$base" == https://nuget.pkg.github.com/marcschier/* ]]
-          curl -fsS --max-time 60 -H "$auth" "${base%/}/fdo/$VERSION/fdo.$VERSION.nupkg" -o Fdo.nupkg
+          curl -fsSL --proto-redir '=https' --max-time 60 -H "$auth" \
+            "${base%/}/fdo/$VERSION/fdo.$VERSION.nupkg" -o Fdo.nupkg
       - name: Get a short-lived NuGet.org token
         id: login
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
@@ -52,4 +53,6 @@ jobs:
         shell: bash
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
-        run: dotnet nuget push Fdo.nupkg --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --no-symbols
+        run: |
+          dotnet nuget push Fdo.nupkg --source https://api.nuget.org/v3/index.json \
+            --api-key "$NUGET_API_KEY" --no-symbols --skip-duplicate

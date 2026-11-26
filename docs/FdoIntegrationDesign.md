@@ -1283,14 +1283,11 @@ or other recovery protocol absent from the specification.
 
 ## Release boundary
 
-The package is not to be published and the repository is not to become public
-until the library is fully implemented and reviewed. Creating package metadata
-in this scaffold does not authorize a package push or repository-visibility
-change. The project is licensed under the [MIT License](../LICENSE). Check the
-redistribution notices for any third-party material shipped with the release.
-Any later interoperability or conformance statement must be supported by
-role-specific protocol, cryptographic, transport, and interoperability
-validation.
+The [release workflow](FdoRelease.md) publishes a preview for evaluation.
+Publication does not establish Base Profile conformance or expand the
+[verified support](FdoQualification.md). The project is licensed under the
+[MIT License](../LICENSE). Check redistribution notices for any third-party
+material shipped with the release.
 
 ## Sources
 

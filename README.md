@@ -6,8 +6,7 @@ over HTTP or HTTPS, or supply your own transport. Licensed under the
 [MIT License](LICENSE).
 
 > **Preview:** The library runs between paired roles. Full Base Profile support
-> and independent interoperability are not yet established. No NuGet package
-> has been published.
+> and independent interoperability are not yet established.
 
 ## 🧩 What it does
 

@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main, 'validation/fdo-parity-*']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -102,3 +103,55 @@ jobs:
           dotnet publish tests/Fdo.AotSmoke/Fdo.AotSmoke.csproj -c Release -f $env:TFM -r $env:RID -o $output
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           ./eng/Invoke-NativeSmoke.ps1 -Directory $output -Rid $env:RID
+
+  publish-github:
+    name: Publish to GitHub Packages
+    needs: [managed, native]
+    if: github.repository == 'marcschier/fdo' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            10.0.404
+            11.0.100
+      - name: Pack and verify the tagged version
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ($env:TAG -cnotmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9a-z]+(?:[.-][0-9a-z]+)*)?$') {
+            throw 'Invalid release tag.'
+          }
+          git merge-base --is-ancestor HEAD origin/main
+          if ($LASTEXITCODE) { throw 'The tagged commit must be in main.' }
+          dotnet pack src/Fdo/Fdo.csproj -c Release -o bin/packages
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./eng/Test-Package.ps1 -Directory bin/packages
+          $expected = "Fdo.$($env:TAG.Substring(1)).nupkg"
+          if (!(Test-Path -LiteralPath "bin/packages/$expected" -PathType Leaf)) {
+            throw "Release tag does not match package version: $expected"
+          }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: fdo-packages
+          path: bin/packages/*.*nupkg
+          if-no-files-found: error
+      - name: Push to GitHub Packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          dotnet nuget push "bin/packages/Fdo.${TAG#v}.nupkg" \
+            --source https://nuget.pkg.github.com/marcschier/index.json \
+            --api-key "$GH_TOKEN" --no-symbols --skip-duplicate
