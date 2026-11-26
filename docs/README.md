@@ -17,5 +17,5 @@ connect the same roles through the HTTP binding.
 | [Qualification and support](FdoQualification.md) | Evidence by platform and role, including NativeAOT and peer limits. |
 | [Interoperability probe](../interop/README.md) | Run the pinned Go peer against the .NET Device in isolation. |
 | [Base Profile audit](FdoBaseProfileAudit.md) | Requirements and remaining support gaps. |
-| [Changelog](../CHANGELOG.md) | User-visible changes that have not yet shipped. |
+| [Changelog](../CHANGELOG.md) | User-visible changes by version. |
 | [Build and release](FdoRelease.md) | Signed assembly identity, local package checks, and gated publication. |

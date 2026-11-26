@@ -195,7 +195,7 @@ Configure each policy separately.
 | Version and Errors | Client selection, no-common-version handling, vendor negotiation, and mixed-version voucher versus session AAD need explicit protocol rules. Other earlier-phase Errors still need a disclosure policy and validated framing. Do not retry an alternate version or encoding on rejection. |
 | Delegated dispositions and trust | `DispDisable` needs host authorization and durable Device deactivation and recovery semantics. NOM and CA Owner need separate trust and identity rules. The offline status interface does not itself authenticate CRL or OCSP evidence. |
 | Platform and interoperability | Windows and macOS lack a verified exact-width DH provider. macOS CCM is unsupported. The configured Go fixture completes one paired onboarding path; this does not establish Base Profile conformance. |
-| Delivery | The library isn't published. An approved local package is not a release. Publishing a package, pushing changes, or making the repository public requires a separate decision. |
+| Delivery | The preview is for evaluation. A local package or a published preview does not qualify additional protocol or platform behavior. |
 
 [go]: https://github.com/fido-device-onboard/go-fdo/pull/285
 [go-ecdh-vectors]: https://github.com/bkgoodman/go-fdo/blob/930d18f414353903e8e9b847cb2cf3d37e0497ce/kex/ecdh_kat_test.go
