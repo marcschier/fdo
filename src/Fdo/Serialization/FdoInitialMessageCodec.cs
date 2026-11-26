@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -116,6 +118,10 @@ internal sealed class FdoInitialMessageCodec
     /// TO0.HelloAck and TO1.HelloRVAck. Vendor names retain their wire order;
     /// their reverse-domain notation and authorization are not checked here.
     /// </summary>
+    /// <param name="MessageType">The numeric type of the FDO message.</param>
+    /// <param name="CapabilityFlags">The encoded protocol capability bits.</param>
+    /// <param name="VendorCapabilities">The vendor capability names carried by the message.</param>
+    /// <param name="GuidOrNonce">The GUID or nonce carried by the selected disposition.</param>
     public sealed record InitialMessage(
         ushort MessageType,
         ReadOnlyMemory<byte> CapabilityFlags,

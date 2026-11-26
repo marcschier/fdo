@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +19,9 @@ namespace Fdo.Enrollment;
 public interface IFdoDeviceErrorTransport
 {
     /// <summary>Sends one sealed FDO Error to the Owner session.</summary>
+    /// <param name="protocolVersion">The numeric FDO protocol version.</param>
+    /// <param name="encodedBody">The FDO body bytes, excluding transport framing.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask SendErrorAsync(
         ushort protocolVersion,
         ReadOnlyMemory<byte> encodedBody,

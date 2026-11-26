@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Fdo\Fdo.csproj" />
+    <Compile Include="..\Shared\ManufacturingFixture.cs" Link="ManufacturingFixture.cs" />
+  </ItemGroup>
+</Project>

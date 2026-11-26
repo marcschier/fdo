@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -31,6 +33,10 @@ internal sealed class FdoServiceInfoCodec
     /// The enclosing array and each embedded CBOR value have independent depth
     /// and item limits. Values retain their original encoding.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// A ServiceInfo entry must contain a key and a value. ServiceInfo must use a definite-length array.
+    /// </exception>
     public IReadOnlyList<Entry> Decode(ReadOnlyMemory<byte> encoded)
     {
         ReadOnlyMemory<byte> copy = _cbor.ValidateAndCopy(encoded);
@@ -64,6 +70,11 @@ internal sealed class FdoServiceInfoCodec
     /// Writes each value as an encoded CBOR item inside its byte-string wrapper.
     /// Duplicate keys and their order are retained.
     /// </summary>
+    /// <param name="entries">The ordered entries for this operation.</param>
+    /// <exception cref="CborContentException">ServiceInfo exceeds the item or byte limit.</exception>
+    /// <exception cref="ArgumentException">
+    /// ServiceInfo entries cannot be null. ServiceInfo keys cannot be null.
+    /// </exception>
     public ReadOnlyMemory<byte> Encode(IReadOnlyList<Entry> entries)
     {
         ArgumentNullException.ThrowIfNull(entries);
@@ -131,5 +142,7 @@ internal sealed class FdoServiceInfoCodec
     /// One key and the encoded CBOR item inside its byte-string wrapper.
     /// The key's module semantics and value are not interpreted here.
     /// </summary>
+    /// <param name="Key">The key used by this operation.</param>
+    /// <param name="EncodedValue">The encoded value of the field.</param>
     public sealed record Entry(string Key, ReadOnlyMemory<byte> EncodedValue);
 }

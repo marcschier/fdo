@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -256,7 +258,7 @@ public sealed class FdoHttpRendezvousStepTests
             plan, () => throw new InvalidOperationException(), _ => throw new InvalidOperationException());
 
         await Assert.That(declined.Reported).IsEqualTo(FdoRendezvousAttemptResult.Declined);
-        await Assert.That(authorized[1].AbsoluteUri).IsEqualTo($"https://127.0.0.2:{closed}/");
+        await Assert.That(authorized[1].AbsoluteUri).IsEqualTo($"https://127.0.0.1:{closed}/");
         await Assert.That(uncertain.Reported).IsEqualTo(FdoRendezvousAttemptResult.Uncertain);
         await Assert.That(uncertain.Error).IsNotNull();
         await Assert.That(uncertain.HasValue).IsFalse();
@@ -274,16 +276,19 @@ public sealed class FdoHttpRendezvousStepTests
     {
         using var authentication = new AuthenticationFixture();
         var fixture = new RendezvousFixture(authentication);
-        var silent = new TcpListener(IPAddress.Parse("127.0.0.2"), 0);
+        var silent = new TcpListener(IPAddress.Loopback, 0);
         silent.Start();
         try
         {
             FdoRendezvousAttemptPlan plan = OwnerPlan(((IPEndPoint)silent.LocalEndpoint).Port);
             await FdoHttp.RunOwnerRendezvousStepAsync(plan, () => fixture.CreateOwner(), _ => false);
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            Task<FdoRendezvousStepResult<uint>> attempt = FdoHttp.RunOwnerRendezvousStepAsync(
+                plan, () => fixture.CreateOwner(), _ => true, 8192, cancellation.Token).AsTask();
 
-            await CatchAsync<OperationCanceledException>(async () => await FdoHttp.RunOwnerRendezvousStepAsync(
-                plan, () => fixture.CreateOwner(), _ => true, 8192, cancellation.Token));
+            using TcpClient connection = await silent.AcceptTcpClientAsync(cancellation.Token);
+            await cancellation.CancelAsync();
+            await CatchAsync<OperationCanceledException>(async () => await attempt);
 
             await Assert.That(plan.Next().Kind).IsEqualTo(FdoRendezvousPlanStepKind.ReconciliationRequired);
             plan.Reconcile(FdoRendezvousAttemptResult.Stop);
@@ -335,7 +340,7 @@ public sealed class FdoHttpRendezvousStepTests
 
     private static FdoRendezvousAttemptPlan OwnerPlan(int port) => new(
         FdoRendezvousInfo.ParseDirectives(
-            Info([Dns("rvserver.local")], [Ip([127, 0, 0, 2]), Unsigned(4, (ulong)port)]),
+            Info([Dns("rvserver.local")], [Ip([127, 0, 0, 1]), Unsigned(4, (ulong)port)]),
             FdoRendezvousProtocol.OwnerRegistration),
         new FdoRendezvousAttemptPlanOptions { MaxAttempts = 10, Deadline = DateTimeOffset.MaxValue });
 

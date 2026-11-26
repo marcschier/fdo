@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -16,6 +18,7 @@ namespace Fdo.Cryptography;
 public interface IFdoDelegateOfflineStatusSource
 {
     /// <summary>Returns one detached decision per target; missing or ambiguous coverage does not grant authorization.</summary>
+    /// <param name="path">The ordered path of certificates or verification targets.</param>
     IReadOnlyList<FdoDelegateOfflineStatus> GetStatuses(IReadOnlyList<FdoDelegateRevocationTarget> path);
 }
 
@@ -57,16 +60,16 @@ public sealed class FdoDelegateRevocationTarget
 public enum FdoDelegateCertificateStatus
 {
     /// <summary>The source could not establish revocation status.</summary>
-    Unknown,
+    Unknown = 0,
 
     /// <summary>The source verified current, complete evidence that the certificate is not revoked.</summary>
-    Good,
+    Good = 1,
 
     /// <summary>The certificate is revoked.</summary>
-    Revoked,
+    Revoked = 2,
 
     /// <summary>The source lacks revocation authority for this issuer.</summary>
-    NoAuthority,
+    NoAuthority = 3,
 }
 
 /// <summary>An exact local revocation decision returned by the configured source.</summary>

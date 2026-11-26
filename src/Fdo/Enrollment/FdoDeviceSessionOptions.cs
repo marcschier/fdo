@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography;
 using Fdo.Cryptography;
@@ -10,13 +12,19 @@ namespace Fdo.Enrollment;
 public enum FdoDeviceHmacAlgorithm
 {
     /// <summary>HMAC-SHA-256 with a 32-byte Device secret.</summary>
-    HmacSha256,
+    HmacSha256 = 0,
 
     /// <summary>HMAC-SHA-384 with a 64-byte Device secret.</summary>
-    HmacSha384,
+    HmacSha384 = 1,
 }
 
 /// <summary>Device metadata advertised by the paired devmod inventory.</summary>
+/// <param name="Os">The operating system reported by the Device.</param>
+/// <param name="Architecture">The Device architecture reported in ServiceInfo.</param>
+/// <param name="Version">The Device software version reported in ServiceInfo.</param>
+/// <param name="Device">The Device description reported in ServiceInfo.</param>
+/// <param name="Separator">The separator reported in the Device's ServiceInfo inventory.</param>
+/// <param name="BinaryFormats">The binary formats advertised by the Device.</param>
 public sealed record FdoDeviceMetadata(
     string Os,
     string Architecture,

@@ -1,5 +1,8 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Formats.Cbor;
 using System.Net;
 using System.Runtime.Versioning;
@@ -86,6 +89,7 @@ public static class FdoRendezvousInfo
     /// directive order, with DNS before IP within a directive.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Input is limited to 65,535 encoded bytes, 256 directives, and 16
     /// instructions per directive. A Device-applicable rvserver.local DNS
     /// directive is required. Each instruction must use the paired
@@ -97,12 +101,14 @@ public static class FdoRendezvousInfo
     /// Unsupported variables in an applicable directive, including certificate
     /// hashes, network-medium constraints, delays, bypass, and extensions,
     /// cause an exception rather than being ignored.
-    ///
+    /// </para>
+    /// <para>
     /// Owners use HTTPS and RVOwnerPort; Devices use RVProtocol and RVDevPort.
     /// An omitted protocol selects HTTPS/443 unless the Device port is 80,
     /// which selects HTTP. A nonstandard Device port without an explicit
     /// protocol is not supported. RVProtRest selects HTTPS. The host must
     /// process DNS results and apply its own policy before connecting.
+    /// </para>
     /// </remarks>
     /// <param name="encodedRendezvousInfo">The encoded RendezvousInfo array.</param>
     /// <param name="protocol">The Owner registration or Device lookup role.</param>
@@ -144,7 +150,7 @@ public static class FdoRendezvousInfo
         FdoRendezvousProtocol protocol) =>
         new(protocol, ParseCore(encodedRendezvousInfo, protocol, allowDelay: true));
 
-    private static IReadOnlyList<FdoRendezvousDirective> ParseCore(
+    private static ReadOnlyCollection<FdoRendezvousDirective> ParseCore(
         ReadOnlyMemory<byte> encodedRendezvousInfo,
         FdoRendezvousProtocol protocol,
         bool allowDelay)

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -406,15 +408,15 @@ public sealed class FdoCoseEncryptThenMacCbcTests
         foreach (int limit in new[] { 0, -1 })
         {
             await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-                new FdoCoseEncryptThenMacCodec(maxEncodedBytes: limit))).IsTrue();
+                _ = new FdoCoseEncryptThenMacCodec(maxEncodedBytes: limit))).IsTrue();
             await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-                new FdoCoseEncryptThenMacCodec(maxItems: limit))).IsTrue();
+                _ = new FdoCoseEncryptThenMacCodec(maxItems: limit))).IsTrue();
         }
 
         foreach (int depth in new[] { 0, 129 })
         {
             await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
-                new FdoCoseEncryptThenMacCodec(maxDepth: depth))).IsTrue();
+                _ = new FdoCoseEncryptThenMacCodec(maxDepth: depth))).IsTrue();
         }
 
         _ = new FdoCoseEncryptThenMacCodec(maxEncodedBytes: 1, maxDepth: 1, maxItems: 1);

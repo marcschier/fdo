@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography;
 using System.Threading;
@@ -16,6 +18,8 @@ namespace Fdo.Enrollment;
 public interface IFdoOwnerServerKeygenHandler
 {
     /// <summary>Returns a certificate and unencrypted DER PKCS#8 private key.</summary>
+    /// <param name="request">The request data for this exchange.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask<FdoServerKeygenCredential> AuthorizeAndIssueAsync(
         FdoEnrollmentRequest request,
         CancellationToken cancellationToken);
@@ -34,6 +38,8 @@ public sealed class FdoServerKeygenCredential : IDisposable
     private bool _disposed;
 
     /// <summary>Snapshots one certificate and its unencrypted PKCS#8 private key.</summary>
+    /// <param name="certificate">The certificate to process.</param>
+    /// <param name="privateKeyPkcs8">The DER PKCS#8 private key.</param>
     public FdoServerKeygenCredential(
         ReadOnlyMemory<byte> certificate,
         ReadOnlyMemory<byte> privateKeyPkcs8)

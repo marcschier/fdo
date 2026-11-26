@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -40,7 +42,7 @@ public sealed class FdoTo2ServiceInfoStateTests
         TransferDevice(deviceState, ownerState, deviceChannel, ownerChannel, Device(false));
         TransferOwner(deviceState, ownerState, deviceChannel, ownerChannel, Owner(false, true));
 
-        ReadOnlyMemory<byte> done = new FdoTo2CompletionCodec().EncodeDone(Nonce, null);
+        ReadOnlyMemory<byte> done = FdoTo2CompletionCodec.EncodeDone(Nonce, null);
         deviceState.RecordDone(done);
         byte[] receivedDone = ownerChannel.Open(deviceChannel.Seal(done));
         try
@@ -79,8 +81,7 @@ public sealed class FdoTo2ServiceInfoStateTests
     [Test]
     public async Task RequiresAnEmptyDeviceReplyWhileTheOwnerHasMore()
     {
-        ReadOnlyMemory<byte>[] invalid = [Device(true), Device(false, Data)];
-        foreach (ReadOnlyMemory<byte> reply in invalid)
+        foreach (ReadOnlyMemory<byte> reply in (ReadOnlyMemory<byte>[])[Device(true), Device(false, Data)])
         {
             var state = new FdoTo2ServiceInfoState(Nonce);
             state.RecordDevice(Device(false));
@@ -117,8 +118,7 @@ public sealed class FdoTo2ServiceInfoStateTests
     [Test]
     public async Task RequiresOwnerDoneMatchingChallengeAndNullReuseHmac()
     {
-        var completion = new FdoTo2CompletionCodec();
-        ReadOnlyMemory<byte> done = completion.EncodeDone(Nonce, null);
+        ReadOnlyMemory<byte> done = FdoTo2CompletionCodec.EncodeDone(Nonce, null);
         var premature = new FdoTo2ServiceInfoState(Nonce);
         await Assert.That(Throws<InvalidOperationException>(() => premature.RecordDone(done))).IsTrue();
         await Assert.That(Throws<InvalidOperationException>(() => premature.RecordDevice(Device(false)))).IsTrue();
@@ -127,13 +127,13 @@ public sealed class FdoTo2ServiceInfoStateTests
         wrongNonce[0] ^= 1;
         var wrongChallenge = NewAfterOwnerDone();
         await Assert.That(Throws<CryptographicException>(() =>
-            wrongChallenge.RecordDone(completion.EncodeDone(wrongNonce, null)))).IsTrue();
+            wrongChallenge.RecordDone(FdoTo2CompletionCodec.EncodeDone(wrongNonce, null)))).IsTrue();
         await Assert.That(Throws<InvalidOperationException>(() => wrongChallenge.RecordDone(done))).IsTrue();
 
         var replacement = new FdoHashValue(FdoHashAlgorithm.HmacSha256, new byte[32]);
         var wrongDisposition = NewAfterOwnerDone();
         await Assert.That(Throws<CborContentException>(() =>
-            wrongDisposition.RecordDone(completion.EncodeDone(Nonce, replacement)))).IsTrue();
+            wrongDisposition.RecordDone(FdoTo2CompletionCodec.EncodeDone(Nonce, replacement)))).IsTrue();
 
         byte[] sourceNonce = (byte[])Nonce.Clone();
         var copied = new FdoTo2ServiceInfoState(sourceNonce);
@@ -146,7 +146,6 @@ public sealed class FdoTo2ServiceInfoStateTests
     [Test]
     public async Task AcceptsAndPreservesTheSelectedReplacementHmac()
     {
-        var completion = new FdoTo2CompletionCodec();
         foreach (FdoHashAlgorithm algorithm in new[] { FdoHashAlgorithm.HmacSha256, FdoHashAlgorithm.HmacSha384 })
         {
             byte[] value = new byte[algorithm == FdoHashAlgorithm.HmacSha256 ? 32 : 48];
@@ -154,21 +153,20 @@ public sealed class FdoTo2ServiceInfoStateTests
             var expected = new FdoHashValue(algorithm, value);
             var state = NewAfterOwnerDone();
 
-            FdoHashValue? actual = state.RecordDone(completion.EncodeDone(Nonce, expected), algorithm);
+            FdoHashValue? actual = state.RecordDone(FdoTo2CompletionCodec.EncodeDone(Nonce, expected), algorithm);
 
             await Assert.That(actual is not null).IsTrue();
             await Assert.That(actual!.Encode().Span.SequenceEqual(expected.Encode().Span)).IsTrue();
             await Assert.That(Throws<InvalidOperationException>(() =>
-                state.RecordDone(completion.EncodeDone(Nonce, expected), algorithm))).IsTrue();
+                state.RecordDone(FdoTo2CompletionCodec.EncodeDone(Nonce, expected), algorithm))).IsTrue();
         }
     }
 
     [Test]
     public async Task RejectsMissingOrWrongAlgorithmReplacementHmacAndEndsState()
     {
-        var completion = new FdoTo2CompletionCodec();
         var missing = NewAfterOwnerDone();
-        ReadOnlyMemory<byte> missingHmac = completion.EncodeDone(Nonce, null);
+        ReadOnlyMemory<byte> missingHmac = FdoTo2CompletionCodec.EncodeDone(Nonce, null);
         await Assert.That(Throws<CborContentException>(() =>
             missing.RecordDone(missingHmac, FdoHashAlgorithm.HmacSha256))).IsTrue();
         await Assert.That(Throws<InvalidOperationException>(() =>
@@ -176,7 +174,7 @@ public sealed class FdoTo2ServiceInfoStateTests
 
         var wrong = NewAfterOwnerDone();
         var hmac384 = new FdoHashValue(FdoHashAlgorithm.HmacSha384, new byte[48]);
-        ReadOnlyMemory<byte> wrongHmac = completion.EncodeDone(Nonce, hmac384);
+        ReadOnlyMemory<byte> wrongHmac = FdoTo2CompletionCodec.EncodeDone(Nonce, hmac384);
         await Assert.That(Throws<CborContentException>(() =>
             wrong.RecordDone(wrongHmac, FdoHashAlgorithm.HmacSha256))).IsTrue();
         await Assert.That(Throws<InvalidOperationException>(() =>
@@ -189,7 +187,7 @@ public sealed class FdoTo2ServiceInfoStateTests
         byte[] nonce = (byte[])Nonce.Clone();
         nonce[0] ^= 1;
         var hmac = new FdoHashValue(FdoHashAlgorithm.HmacSha256, new byte[32]);
-        ReadOnlyMemory<byte> done = new FdoTo2CompletionCodec().EncodeDone(nonce, hmac);
+        ReadOnlyMemory<byte> done = FdoTo2CompletionCodec.EncodeDone(nonce, hmac);
         var state = NewAfterOwnerDone();
 
         await Assert.That(Throws<CryptographicException>(() =>
@@ -249,7 +247,7 @@ public sealed class FdoTo2ServiceInfoStateTests
         await Assert.That(Throws<CborContentException>(() => state.RecordDevice(Device(false)))).IsTrue();
         await Assert.That(Throws<InvalidOperationException>(() => state.RecordDevice(Device(false)))).IsTrue();
         await Assert.That(Throws<InvalidOperationException>(() =>
-            state.RecordDone(new FdoTo2CompletionCodec().EncodeDone(Nonce, null)))).IsTrue();
+            state.RecordDone(FdoTo2CompletionCodec.EncodeDone(Nonce, null)))).IsTrue();
     }
 
     [Test]
@@ -262,7 +260,7 @@ public sealed class FdoTo2ServiceInfoStateTests
             state.RecordOwner(Owner(false, true));
         }
 
-        state.RecordDone(new FdoTo2CompletionCodec().EncodeDone(Nonce, null));
+        state.RecordDone(FdoTo2CompletionCodec.EncodeDone(Nonce, null));
         await Assert.That(Throws<InvalidOperationException>(() => state.RecordDevice(Device(false)))).IsTrue();
     }
 
@@ -277,7 +275,7 @@ public sealed class FdoTo2ServiceInfoStateTests
         var twice = new FdoTo2ServiceInfoState(Nonce);
         twice.RecordDevice(Device(false));
         await Assert.That(Throws<InvalidOperationException>(() => twice.RecordDevice(Device(false)))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => new FdoTo2ServiceInfoState(new byte[15]))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() => _ = new FdoTo2ServiceInfoState(new byte[15]))).IsTrue();
     }
 
     private static FdoTo2ServiceInfoState NewAfterOwnerDone()

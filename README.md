@@ -2,7 +2,8 @@
 
 A [FIDO Device Onboard (FDO) 2.0](https://fidoalliance.org/specs/FDO/FIDO-Device-Onboard-PS-v2.0-20260402/FIDO-Device-Onboard-PS-v2.0-20260402.html)
 library for .NET 10 and 11. Run the Device, Owner, and Rendezvous roles together
-over HTTP or HTTPS, or supply your own transport.
+over HTTP or HTTPS, or supply your own transport. Licensed under the
+[MIT License](LICENSE).
 
 > **Preview:** The library runs between paired roles. Full Base Profile support
 > and independent interoperability are not yet established. No NuGet package
@@ -20,17 +21,16 @@ storage. The library handles messages, signatures, and protocol state.
 
 ## Quick start
 
-Use the .NET 11 SDK to build both targets. From the repository root, run the
-.NET 10 loopback example:
+Install the .NET 11 SDK and the .NET 10 runtime. From the repository root,
+initialize a Device and transfer its voucher in process:
 
 ```powershell
-dotnet run --project tests\Fdo.AotSmoke\Fdo.AotSmoke.csproj --framework net10.0 -- --scenario ecdh256-a128gcm
+dotnet run --project samples/Fdo.InProcess --framework net10.0
 ```
 
-The example creates temporary keys and runs initialization, voucher transfer,
-Rendezvous, and protected enrollment. Look for `FDO AOT smoke passed`. This
-command runs managed code; `dynamicCode` in the output distinguishes it from
-a NativeAOT run.
+The sample uses ephemeral keys. Look for `FDO initialization complete`.
+Try the [HTTP loopback sample](samples/Fdo.HttpLoopback/README.md) to host
+the Manufacturer over HTTP.
 
 To build the library and test project together:
 
@@ -40,6 +40,6 @@ dotnet build Fdo.slnx
 
 ## 📚 Documentation
 
-- [Host the roles](docs/FdoHosting.md): public APIs, callbacks, and storage.
-- [Integration design](docs/FdoIntegrationDesign.md): trust boundaries and paired wire choices.
-- [Qualification and support](docs/FdoQualification.md): verified paths, platform limits, and open work.
+- [Documentation index](docs/README.md): hosting, recovery, trust, and integration.
+- [Qualification and support](docs/FdoQualification.md): tested paths and limitations.
+- [Changelog](CHANGELOG.md)

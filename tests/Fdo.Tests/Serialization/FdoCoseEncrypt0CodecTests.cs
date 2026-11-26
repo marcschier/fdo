@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -11,7 +13,14 @@ namespace Fdo.Tests.Serialization;
 [UnsupportedOSPlatform("browser")]
 public sealed class FdoCoseEncrypt0CodecTests
 {
-    // Generated independently with Python cryptography AESGCM/AESCCM and RFC 9052 CBOR.
+    /// <summary>
+    /// Generated independently with Python cryptography AESGCM/AESCCM and RFC 9052 CBOR.
+    /// </summary>
+    /// <param name="algorithmValue">The COSE algorithm identifier.</param>
+    /// <param name="keyLength">The key length in bytes.</param>
+    /// <param name="nonceLength">The nonce length in bytes.</param>
+    /// <param name="expectedHex">The expected encoded message in hexadecimal.</param>
+    /// <returns>A task that completes after the vector assertions.</returns>
     [Test]
     [Arguments(1, 16, 12, "D08343A10101A1054C000000000000000000000000538189D86A6598C9FE2ACE06607AF578ACFB8E8B")]
     [Arguments(3, 32, 12, "D08343A10103A1054C000000000000000000000000534CA6426826E625E27E357059CF1E52D8E6090E")]
@@ -74,7 +83,7 @@ public sealed class FdoCoseEncrypt0CodecTests
     [Test]
     public async Task RejectsModifiedNonceCiphertextAndTag()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -97,7 +106,7 @@ public sealed class FdoCoseEncrypt0CodecTests
     [Test]
     public async Task AuthenticatesTheReceivedProtectedHeaderBytes()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A256Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A256Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -123,7 +132,7 @@ public sealed class FdoCoseEncrypt0CodecTests
     public async Task RejectsIncorrectTagShapeHeadersAndCiphertextLength()
     {
         var codec = new FdoCoseEncrypt0Codec();
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         byte[] key = new byte[16];
         byte[] frame = Convert.FromHexString(
             "D08343A10101A1054C000000000000000000000000538189D86A6598C9FE2ACE06607AF578ACFB8E8B");
@@ -159,7 +168,7 @@ public sealed class FdoCoseEncrypt0CodecTests
     [Test]
     public async Task RejectsInvalidPlaintextEvenWhenTheTagIsValid()
     {
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         if (!FdoCoseAead.IsSupported(algorithm))
         {
             return;
@@ -222,7 +231,7 @@ public sealed class FdoCoseEncrypt0CodecTests
     public async Task RejectsUnsupportedAlgorithmsAndIncorrectKeyOrNonceLengths()
     {
         var codec = new FdoCoseEncrypt0Codec();
-        var algorithm = FdoCoseAeadAlgorithm.A128Gcm;
+        const FdoCoseAeadAlgorithm algorithm = FdoCoseAeadAlgorithm.A128Gcm;
         byte[] plaintext = [0x80];
         byte[] frame = Convert.FromHexString(
             "D08343A10101A1054C000000000000000000000000538189D86A6598C9FE2ACE06607AF578ACFB8E8B");

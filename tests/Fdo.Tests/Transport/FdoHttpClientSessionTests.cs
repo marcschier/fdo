@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Linq;
 using System.Net;
@@ -79,9 +81,9 @@ public sealed class FdoHttpClientSessionTests
     {
         await Assert.That(FdoProtocolVersion.V20.Value).IsEqualTo((ushort)200);
         await Assert.That(new FdoProtocolVersion(1, 1).Value).IsEqualTo((ushort)101);
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoProtocolVersion(2, 100))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoProtocolVersion(0, 0))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoProtocolVersion(656, 0))).IsTrue();
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoProtocolVersion(2, 100))).IsTrue();
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoProtocolVersion(0, 0))).IsTrue();
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() => _ = new FdoProtocolVersion(656, 0))).IsTrue();
     }
 
     [Test]
@@ -552,7 +554,7 @@ public sealed class FdoHttpClientSessionTests
     public async Task ConcurrentExchangeIsRejected()
     {
         var release = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var handler = new ScriptedHandler().RespondAsync(_ => release.Task);
+        var handler = new ScriptedHandler().EnqueueResponse(_ => release.Task);
         using var client = new FdoHttpClient(handler);
         var session = CreateSession(client, FdoProtocolKind.TransferOwnership1);
 
@@ -602,15 +604,21 @@ public sealed class FdoHttpClientSessionTests
     public async Task ConstructorRejectsInvalidArguments()
     {
         using var client = new FdoHttpClient(new ScriptedHandler());
-        FdoProtocolKind to1 = FdoProtocolKind.TransferOwnership1;
+        const FdoProtocolKind to1 = FdoProtocolKind.TransferOwnership1;
         FdoProtocolVersion v20 = FdoProtocolVersion.V20;
 
-        await Assert.That(Throws<ArgumentException>(() => new FdoHttpClientSession(client, new Uri("/rv", UriKind.Relative), to1, v20))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => new FdoHttpClientSession(client, new Uri("ftp://rv.example/"), to1, v20))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => new FdoHttpClientSession(client, new Uri("http://rv.example/?a=b"), to1, v20))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => new FdoHttpClientSession(client, BaseAddress, (FdoProtocolKind)99, v20))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => new FdoHttpClientSession(client, BaseAddress, to1, default))).IsTrue();
-        await Assert.That(Throws<ArgumentOutOfRangeException>(() => new FdoHttpClientSession(client, BaseAddress, to1, v20, 0))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoHttpClientSession(client, new Uri("/rv", UriKind.Relative), to1, v20))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoHttpClientSession(client, new Uri("ftp://rv.example/"), to1, v20))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoHttpClientSession(client, new Uri("http://rv.example/?a=b"), to1, v20))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoHttpClientSession(client, BaseAddress, (FdoProtocolKind)99, v20))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            _ = new FdoHttpClientSession(client, BaseAddress, to1, default))).IsTrue();
+        await Assert.That(Throws<ArgumentOutOfRangeException>(() =>
+            _ = new FdoHttpClientSession(client, BaseAddress, to1, v20, 0))).IsTrue();
     }
 
     [Test]

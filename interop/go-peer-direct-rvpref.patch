@@ -1,0 +1,30 @@
+diff --git a/protocol/rv.go b/protocol/rv.go
+--- a/protocol/rv.go
++++ b/protocol/rv.go
+@@ -67,4 +67,5 @@ type RvTO2Addr struct {
+ 	DNSAddress        *string // Can be null, unless IPAddress is null
+ 	Port              uint16
+ 	TransportProtocol TransportProtocol
++	RVPref            cbor.RawBytes `cbor:",omitempty"`
+ }
+diff --git a/examples/cmd/server.go b/examples/cmd/server.go
+--- a/examples/cmd/server.go
++++ b/examples/cmd/server.go
+@@ -681,4 +681,8 @@
+-func (s withOwnerAddrs) OwnerAddrs(context.Context, fdo.Voucher) ([]protocol.RvTO2Addr, time.Duration, error) {
++func (s withOwnerAddrs) OwnerAddrs(ctx context.Context, _ fdo.Voucher) ([]protocol.RvTO2Addr, time.Duration, error) {
++	var preferences cbor.RawBytes
++	if protocol.VersionFromContext(ctx) == protocol.Version200 && rvDelegate == "" {
++		preferences = cbor.RawBytes{0xf6}
++	}
+ 	var autoTO0Addrs []protocol.RvTO2Addr
+ 	for _, directive := range protocol.ParseDeviceRvInfo(s.RVInfo) {
+ 		if directive.Bypass {
+@@ -698,6 +702,7 @@
+ 			autoTO0Addrs = append(autoTO0Addrs, protocol.RvTO2Addr{
+ 				DNSAddress:        &to1Host,
+ 				Port:              uint16(to1Port),
+ 				TransportProtocol: proto,
++				RVPref:            preferences,
+ 			})
+ 		}

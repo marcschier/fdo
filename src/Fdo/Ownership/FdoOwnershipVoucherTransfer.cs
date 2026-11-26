@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -16,14 +18,17 @@ public static class FdoOwnershipVoucherTransfer
     /// Extends a canonical FDO 2.0 voucher to the supplied Owner key.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The host must authorize the exact input voucher and the new Owner key.
     /// It retains the signing key and must keep it available without concurrent
     /// use for this call. The result is not persisted by the library.
-    ///
+    /// </para>
+    /// <para>
     /// This operation checks the certificate-chain hash and all transfer entries,
     /// binding the signing key to the final current Owner. It does not validate certificate
     /// trust or the Device-held header HMAC. The new key uses
     /// SubjectPublicKeyInfo, and the Owner key types must match.
+    /// </para>
     /// </remarks>
     /// <param name="encodedZeroEntryVoucher">The retained encoded voucher, with or without prior entries.</param>
     /// <param name="currentOwnerSigningKey">The private key for the voucher's current Owner.</param>
@@ -36,6 +41,11 @@ public static class FdoOwnershipVoucherTransfer
         ExtendCore(encodedZeroEntryVoucher, currentOwnerSigningKey, approvedNewOwnerPublicKey);
 
     /// <summary>Extends a voucher to the approved ECDSA key of a leaf-first DER certificate chain.</summary>
+    /// <param name="encodedVoucher">The exact bytes of the ownership voucher.</param>
+    /// <param name="currentOwnerSigningKey">The private key of the current voucher Owner.</param>
+    /// <param name="approvedNewOwnerCertificates">
+    /// The approved new Owner certificate chain, starting with the leaf.
+    /// </param>
     /// <remarks>
     /// The new voucher entry retains the exact certificates using FDO X5CHAIN.
     /// The caller authorizes the leaf key and any use of attached certificates.

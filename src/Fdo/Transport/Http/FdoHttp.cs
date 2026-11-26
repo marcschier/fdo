@@ -1,4 +1,7 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using System.Threading;
@@ -32,6 +35,10 @@ public interface IFdoHttpPeer
 public static class FdoHttp
 {
     /// <summary>Runs one paired Device TO2 enrollment.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     public static ValueTask<FdoDeviceEnrollment> RunDeviceAsync(
         FdoDeviceSession device,
         Uri baseAddress,
@@ -40,6 +47,12 @@ public static class FdoHttp
         RunDeviceAsync(device, baseAddress, maxResponseBytes, cancellationToken, privateTrust: null);
 
     /// <summary>Runs one Device TO2 enrollment with optional private CA trust for HTTPS.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<FdoDeviceEnrollment> RunDeviceAsync(
         FdoDeviceSession device, Uri baseAddress, int maxResponseBytes, CancellationToken cancellationToken,
         FdoHttpPrivateTrust? privateTrust)
@@ -52,6 +65,10 @@ public static class FdoHttp
     }
 
     /// <summary>Runs one paired Device Initialize exchange.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// The Device authorization callback can inspect the selected address
     /// through <see cref="IFdoHttpPeer"/> on the supplied transport. It must
@@ -65,6 +82,12 @@ public static class FdoHttp
         RunDeviceInitializeAsync(device, baseAddress, maxResponseBytes, cancellationToken, privateTrust: null);
 
     /// <summary>Runs one Device Initialize exchange with optional private CA trust for HTTPS.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<FdoDeviceInitializeCredential> RunDeviceInitializeAsync(
         FdoDeviceInitializeSession device, Uri baseAddress, int maxResponseBytes, CancellationToken cancellationToken,
         FdoHttpPrivateTrust? privateTrust)
@@ -77,6 +100,10 @@ public static class FdoHttp
     }
 
     /// <summary>Runs one paired Owner TO0 registration.</summary>
+    /// <param name="owner">The Owner session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     public static ValueTask<uint> RunOwnerRendezvousAsync(
         FdoOwnerRendezvousSession owner,
         Uri baseAddress,
@@ -85,6 +112,12 @@ public static class FdoHttp
         RunOwnerRendezvousAsync(owner, baseAddress, maxResponseBytes, cancellationToken, privateTrust: null);
 
     /// <summary>Runs one Owner TO0 registration with optional private CA trust for HTTPS.</summary>
+    /// <param name="owner">The Owner session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<uint> RunOwnerRendezvousAsync(
         FdoOwnerRendezvousSession owner, Uri baseAddress, int maxResponseBytes, CancellationToken cancellationToken,
         FdoHttpPrivateTrust? privateTrust)
@@ -97,6 +130,10 @@ public static class FdoHttp
     }
 
     /// <summary>Runs one paired Device TO1 lookup.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <remarks>
     /// A redirect ends this run without being followed. Its untrusted target
     /// is available on the resulting <see cref="FdoTransportException"/>.
@@ -111,6 +148,12 @@ public static class FdoHttp
         RunDeviceRendezvousAsync(device, baseAddress, maxResponseBytes, cancellationToken, privateTrust: null);
 
     /// <summary>Runs one Device TO1 lookup with optional private CA trust for HTTPS.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<FdoDeviceRendezvousResult> RunDeviceRendezvousAsync(
         FdoDeviceRendezvousSession device, Uri baseAddress, int maxResponseBytes, CancellationToken cancellationToken,
         FdoHttpPrivateTrust? privateTrust)
@@ -123,6 +166,12 @@ public static class FdoHttp
     }
 
     /// <summary>Caches all pages from one delegated TO1 lookup over a single HTTP session.</summary>
+    /// <param name="device">The Device session for this exchange.</param>
+    /// <param name="baseAddress">The HTTP or HTTPS base URI for the exchange.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<IReadOnlyList<FdoDeviceRendezvousResult>> RunDeviceRendezvousBatchAsync(
         FdoDeviceRendezvousSession device, Uri baseAddress, int maxResponseBytes = ushort.MaxValue,
         CancellationToken cancellationToken = default, FdoHttpPrivateTrust? privateTrust = null)
@@ -181,6 +230,13 @@ public static class FdoHttp
         RunDeviceRendezvousStepAsync(plan, createSession, authorizeDestination, maxResponseBytes, cancellationToken, privateTrust: null);
 
     /// <summary>Takes one Device TO1 plan step with optional private CA trust for this HTTPS attempt.</summary>
+    /// <param name="plan">The host's bounded plan of Rendezvous attempts.</param>
+    /// <param name="createSession">The factory that creates a fresh session for an admitted attempt.</param>
+    /// <param name="authorizeDestination">The host policy that approves a candidate before connecting.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<FdoRendezvousStepResult<FdoDeviceRendezvousResult>> RunDeviceRendezvousStepAsync(
         FdoRendezvousAttemptPlan plan, Func<FdoDeviceRendezvousSession> createSession,
         Func<FdoRendezvousAttempt, bool> authorizeDestination, int maxResponseBytes, CancellationToken cancellationToken,
@@ -280,6 +336,13 @@ public static class FdoHttp
         RunOwnerRendezvousStepAsync(plan, createSession, authorizeDestination, maxResponseBytes, cancellationToken, privateTrust: null);
 
     /// <summary>Takes one Owner TO0 plan step with optional private CA trust for this HTTPS attempt.</summary>
+    /// <param name="plan">The host's bounded plan of Rendezvous attempts.</param>
+    /// <param name="createSession">The factory that creates a fresh session for an admitted attempt.</param>
+    /// <param name="authorizeDestination">The host policy that approves a candidate before connecting.</param>
+    /// <param name="maxResponseBytes">The maximum encoded response body size, in bytes.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <param name="privateTrust">The optional private CA trust settings for HTTPS.</param>
+    [SuppressMessage("Design", "CA1068", Justification = "Preserve the positional overload with private trust last.")]
     public static async ValueTask<FdoRendezvousStepResult<uint>> RunOwnerRendezvousStepAsync(
         FdoRendezvousAttemptPlan plan, Func<FdoOwnerRendezvousSession> createSession,
         Func<FdoRendezvousAttempt, bool> authorizeDestination, int maxResponseBytes, CancellationToken cancellationToken,

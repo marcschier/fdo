@@ -1,5 +1,8 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -44,7 +47,7 @@ internal static partial class Program
             delegateRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
             delegateRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
             delegateRequest.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
-                new OidCollection { new("1.3.6.1.4.1.45724.3.1.2") }, false));
+                [new Oid("1.3.6.1.4.1.45724.3.1.2")], false));
             using X509Certificate2 certificate = delegateRequest.Create(ownerRequest.SubjectName,
                 X509SignatureGenerator.CreateForECDsa(owner), now.AddMinutes(-5), now.AddDays(1),
                 RandomNumberGenerator.GetBytes(16));
@@ -60,7 +63,7 @@ internal static partial class Program
 
         public ECDsa DelegateKey { get; } = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         public ReadOnlyMemory<byte> OwnerCertificate { get; }
-        public IReadOnlyList<ReadOnlyMemory<byte>> DelegateChain { get; }
+        public ReadOnlyCollection<ReadOnlyMemory<byte>> DelegateChain { get; }
         public FdoDelegateOfflineRevocationPolicy OfflinePolicy { get; }
         public FdoOwnerReplacementOptions OwnerOptions { get; }
         public FdoDeviceSession? DeviceSession { get; set; }

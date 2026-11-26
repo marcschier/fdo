@@ -1,0 +1,55 @@
+name: Promote Fdo to NuGet.org
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact package version already staged in GitHub Packages
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency: fdo-nuget-promotion
+
+jobs:
+  publish:
+    if: github.repository == 'marcschier/fdo' && github.ref == 'refs/heads/main' && vars.FDO_ENABLE_PUBLISHING == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+    steps:
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '11.0.100'
+      - name: Download exact staged Fdo package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9a-z]+([.-][0-9a-z]+)*)?$ ]]; then
+            echo 'Supply an exact normalized NuGet package version.' >&2
+            exit 2
+          fi
+          auth="Authorization: Bearer $GH_TOKEN"
+          base=$(curl -fsS --max-time 30 -H "$auth" https://nuget.pkg.github.com/marcschier/index.json \
+            | jq -er '[.resources[] | select(."@type" == "PackageBaseAddress/3.0.0") | ."@id"][0]')
+          [[ "$base" == https://nuget.pkg.github.com/marcschier/* ]]
+          curl -fsS --max-time 60 -H "$auth" "${base%/}/fdo/$VERSION/fdo.$VERSION.nupkg" -o Fdo.nupkg
+      - name: Get a short-lived NuGet.org token
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      - name: Push the staged package
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push Fdo.nupkg --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --no-symbols

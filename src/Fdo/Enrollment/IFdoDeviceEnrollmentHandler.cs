@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +24,8 @@ public interface IFdoDeviceEnrollmentHandler
     /// Checks the certificate's trust, validity, intended use, and local
     /// authorization policy. Reject it by throwing an exception.
     /// </summary>
+    /// <param name="enrollment">The enrollment data to commit, validate, or install.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask ValidateCertificateAsync(
         FdoDeviceEnrollment enrollment,
         CancellationToken cancellationToken);
@@ -29,6 +33,8 @@ public interface IFdoDeviceEnrollmentHandler
     /// <summary>
     /// Durably installs the enrollment after authenticated DoneAck20.
     /// </summary>
+    /// <param name="enrollment">The enrollment data to commit, validate, or install.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
     ValueTask InstallAsync(FdoDeviceEnrollment enrollment, CancellationToken cancellationToken);
 }
 

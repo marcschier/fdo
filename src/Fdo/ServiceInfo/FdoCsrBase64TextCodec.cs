@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -26,6 +28,9 @@ internal sealed class FdoCsrBase64TextCodec
     private const string AttributesResponseKey = "fdo.csr:csrattrs-res";
     private readonly int _maxPlaintextBytes;
 
+    /// <summary>
+    /// Creates a codec bounded by the negotiated TO2 plaintext limit.
+    /// </summary>
     /// <param name="maxPlaintextBytes">
     /// Maximum encoded TO2 plaintext body size available to one ServiceInfo item.
     /// </param>
@@ -146,13 +151,14 @@ internal sealed class FdoCsrBase64TextCodec
 
     private static string RequestKeyFor(bool isReenrollment, bool isServerKeyGeneration)
     {
-        if (isReenrollment && isServerKeyGeneration)
+        if (!isServerKeyGeneration)
         {
-            throw new ArgumentException("Server key generation is separate from simple re-enrollment.");
+            return isReenrollment ? ReenrollmentRequestKey : RequestKey;
         }
 
-        return isServerKeyGeneration ? ServerKeygenRequestKey :
-            isReenrollment ? ReenrollmentRequestKey : RequestKey;
+        return !isReenrollment
+            ? ServerKeygenRequestKey
+            : throw new ArgumentException("Server key generation is separate from simple re-enrollment.");
     }
 
     private static void ValidateRequest(ReadOnlyMemory<byte> request, bool isServerKeyGeneration)

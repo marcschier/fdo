@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,7 +40,7 @@ internal sealed class ScriptedHandler : DelegatingHandler
         return this;
     }
 
-    public ScriptedHandler RespondAsync(Func<HttpRequestMessage, Task<HttpResponseMessage>> factory)
+    public ScriptedHandler EnqueueResponse(Func<HttpRequestMessage, Task<HttpResponseMessage>> factory)
     {
         _responses.Enqueue(factory);
         return this;
@@ -81,6 +83,7 @@ internal sealed class ScriptedHandler : DelegatingHandler
 /// <summary>
 /// Content that does not report its length, like a chunked response.
 /// </summary>
+/// <param name="data">The response bytes to write.</param>
 internal sealed class UnknownLengthContent(byte[] data) : HttpContent
 {
     protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context) =>

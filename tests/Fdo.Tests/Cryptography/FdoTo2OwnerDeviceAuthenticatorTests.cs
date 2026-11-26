@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -239,7 +241,6 @@ public sealed class FdoTo2OwnerDeviceAuthenticatorTests
     internal sealed class Fixture : IDisposable
     {
         private readonly ECDsa _rootKey;
-        private readonly ECDsa _deviceKey;
         private readonly FdoKeyExchangeSuite _exchange;
         private readonly FdoCoseAeadAlgorithm _cipher;
         private readonly byte[] _ownerNonce = Convert.FromHexString("303132333435363738393A3B3C3D3E3F");
@@ -256,7 +257,7 @@ public sealed class FdoTo2OwnerDeviceAuthenticatorTests
             ECCurve curve = curveSize == 256 ? ECCurve.NamedCurves.nistP256 : ECCurve.NamedCurves.nistP384;
             HashAlgorithmName hash = curveSize == 256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA384;
             _rootKey = ECDsa.Create(curve);
-            _deviceKey = ECDsa.Create(curve);
+            DeviceSigningKey = ECDsa.Create(curve);
             DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddMinutes(-5);
             DateTimeOffset notAfter = notBefore.AddDays(1);
             var rootRequest = new CertificateRequest("CN=FDO test CA", _rootKey, hash);
@@ -266,7 +267,7 @@ public sealed class FdoTo2OwnerDeviceAuthenticatorTests
             rootRequest.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(rootRequest.PublicKey, false));
             RootCertificate = rootRequest.CreateSelfSigned(notBefore, notAfter);
 
-            var deviceRequest = new CertificateRequest("CN=FDO test Device", _deviceKey, hash);
+            var deviceRequest = new CertificateRequest("CN=FDO test Device", DeviceSigningKey, hash);
             deviceRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
             deviceRequest.CertificateExtensions.Add(new X509KeyUsageExtension(keyUsage, true));
             DeviceCertificate = deviceRequest.Create(
@@ -283,16 +284,16 @@ public sealed class FdoTo2OwnerDeviceAuthenticatorTests
                 new long[] { (long)FdoHashAlgorithm.Sha256 }, new byte[16])).ToArray();
             Acknowledgement = initial.EncodeAcknowledgement(new FdoTo2InitialCodec.Acknowledgement(
                 new byte[] { 4 }, Array.Empty<string>(), Voucher.Guid, 4096,
-                new[] { "ECDH256", "ECDH384" },
+                ["ECDH256", "ECDH384"],
                 new long[] { 1, 3, 30, 31, 32, 33, -17760703, -17760704, -17760705, -17760706 },
                 Convert.FromHexString("202122232425262728292A2B2C2D2E2F"),
                 initial.ComputeProbeHash(FdoHashAlgorithm.Sha256, Probe))).ToArray();
-            Proof = CreateProof(_deviceKey);
+            Proof = CreateProof(DeviceSigningKey);
         }
 
         public X509Certificate2 RootCertificate { get; }
         public X509Certificate2 DeviceCertificate { get; }
-        public ECDsa DeviceSigningKey => _deviceKey;
+        public ECDsa DeviceSigningKey { get; }
         public VoucherFixture Voucher { get; }
         public byte[] EncodedChain { get; }
         public byte[] Probe { get; }
@@ -343,7 +344,7 @@ public sealed class FdoTo2OwnerDeviceAuthenticatorTests
             Voucher.Dispose();
             DeviceCertificate.Dispose();
             RootCertificate.Dispose();
-            _deviceKey.Dispose();
+            DeviceSigningKey.Dispose();
             _rootKey.Dispose();
         }
     }

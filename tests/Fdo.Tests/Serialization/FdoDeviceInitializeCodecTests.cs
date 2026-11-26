@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Linq;
@@ -46,7 +48,7 @@ public sealed class FdoDeviceInitializeCodecTests
         Array.Fill(encoded, (byte)0);
 
         await Assert.That(Convert.ToHexString(decoded.CapabilityFlags.Span)).IsEqualTo("8520");
-        await Assert.That(decoded.VendorCapabilities.SequenceEqual(new[] { "com" })).IsTrue();
+        await Assert.That(decoded.VendorCapabilities.SequenceEqual(["com"])).IsTrue();
         await Assert.That(decoded.EncodedDeviceMfgInfo.HasValue).IsTrue();
         await Assert.That(Convert.ToHexString(decoded.EncodedDeviceMfgInfo!.Value.Span)).IsEqualTo("A1616B820102");
     }
@@ -132,7 +134,7 @@ public sealed class FdoDeviceInitializeCodecTests
         byte[] header = Convert.FromHexString(HeaderHex);
         byte[] tag = Convert.FromHexString(HeaderTagHex);
         var first = new SetCredentials(new byte[] { 0x04 }, Array.Empty<string>(), tag);
-        var changedFlags = new SetCredentials(new byte[] { 0x01 }, new[] { "com" }, tag);
+        var changedFlags = new SetCredentials(new byte[] { 0x01 }, ["com"], tag);
         var type = (FdoHashAlgorithm)algorithm;
         byte[] expected = type == FdoHashAlgorithm.HmacSha256
             ? HMACSHA256.HashData(secret, header)
@@ -215,7 +217,7 @@ public sealed class FdoDeviceInitializeCodecTests
     public async Task AppStartEnforcesByteItemAndEmbeddedDepthLimits()
     {
         var message = new AppStart(new byte[] { 0x04 }, Array.Empty<string>(), null);
-        var withVendor = new AppStart(new byte[] { 0x04 }, new[] { "v" }, null);
+        var withVendor = new AppStart(new byte[] { 0x04 }, ["v"], null);
         var withNestedValue = new AppStart(new byte[] { 0x04 }, Array.Empty<string>(), new byte[] { 0x81, 0x81, 0x00 });
         var byteLimited = new FdoDeviceInitializeCodec(maxEncodedBytes: 6);
         var itemLimited = new FdoDeviceInitializeCodec(maxItems: 4);

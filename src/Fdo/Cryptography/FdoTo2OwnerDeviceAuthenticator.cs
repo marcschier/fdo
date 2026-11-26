@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
@@ -102,6 +104,12 @@ internal sealed class FdoTo2OwnerDeviceAuthenticator
     /// certificate key verifies this run and the configured policy accepts
     /// the matching manufacturer and certificate chain.
     /// </summary>
+    /// <param name="encodedDeviceProof">The exact encoded Device proof.</param>
+    /// <exception cref="InvalidOperationException">The Owner Device proof has already been attempted.</exception>
+    /// <exception cref="CryptographicException">
+    /// The Device certificate must contain an ECDSA public key. The Device proof GUID does not match the ownership
+    /// voucher.
+    /// </exception>
     public AuthenticatedDevice Verify(ReadOnlyMemory<byte> encodedDeviceProof)
     {
         if (Interlocked.CompareExchange(ref _attempted, 1, 0) != 0)

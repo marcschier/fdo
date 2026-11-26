@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -206,7 +208,7 @@ public sealed class FdoDelegatedRendezvousTests
         using var run = new Fixture();
         using var server = run.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
         using var binding = FdoHttpServerSession.ForRendezvous(server);
-        using var helloBody = new MemoryStream(run.Rendezvous.Codec.EncodeInitial(20, delegated: true).ToArray());
+        await using var helloBody = new MemoryStream(run.Rendezvous.Codec.EncodeInitial(20, delegated: true).ToArray());
         FdoHttpServerResponse hello = await binding.ProcessAsync(new FdoHttpServerRequest
         {
             Method = "POST",
@@ -217,7 +219,7 @@ public sealed class FdoDelegatedRendezvousTests
         });
         binding.ConfirmResponseSent();
         ReadOnlyMemory<byte> nonce = run.Rendezvous.Codec.ReadInitial(21, hello.EncodedBody, true).GuidOrNonce!.Value;
-        using var ownerSignBody = new MemoryStream(run.Rendezvous.Codec.EncodeOwnerSign(
+        await using var ownerSignBody = new MemoryStream(run.Rendezvous.Codec.EncodeOwnerSign(
             run.Rendezvous.EncodeVoucher(), 120, nonce, run.Rendezvous.Address, FdoHashAlgorithm.Sha256, run.Key,
             new FdoX5ChainCodec().Encode([missingPermission
                 ? run.Certificate(FdoDelegateChainVerifier.OnboardReuseCredentialsOid) : run.Leaf])).ToArray());
@@ -554,33 +556,106 @@ public sealed class FdoDelegatedRendezvousTests
     }
 
     [Test]
-    [Arguments(false)]
-    [Arguments(true)]
-    public async Task MixedAcknowledgmentIsNotAcceptedAsAnExactSelection(bool device)
+    [Arguments(false, 0x06)]
+    [Arguments(false, 0x86)]
+    [Arguments(true, 0x87)]
+    public async Task DeviceKeepsItsTo1ModeWhenAcknowledgmentAdvertisesExtraCapabilities(bool delegated, int flags)
     {
         using var run = new Fixture();
-        using var registration = run.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
-        if (device)
+        using var registration = delegated
+            ? run.CreateServer(FdoRendezvousProtocol.OwnerRegistration)
+            : run.Rendezvous.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
+        if (delegated)
         {
             await run.RegisterAsync(registration);
         }
+        else
+        {
+            await run.Rendezvous.CreateOwner().RunAsync(run.Rendezvous.CreateTransport(registration));
+        }
+
+        using var lookup = delegated
+            ? run.CreateServer(FdoRendezvousProtocol.DeviceLookup)
+            : run.Rendezvous.CreateServer(FdoRendezvousProtocol.DeviceLookup);
+        var transport = run.Rendezvous.CreateTransport(lookup);
+        transport.Change = message => message.Type == FdoRendezvousMessageType.DeviceHelloAck
+            ? message with { Body = RewriteInitial(message, [(byte)flags]) }
+            : message;
+
+        FdoDeviceRendezvousResult result = await run.Rendezvous.CreateDevice(delegated).RunAsync(transport);
+
+        await Assert.That(Flags(transport.Messages[0].Body)).IsEqualTo(delegated ? (byte)0x84 : (byte)0x04);
+        await Assert.That(transport.Messages[2].Type).IsEqualTo(FdoRendezvousMessageType.ProveToRendezvous);
+        await Assert.That(transport.Messages[2].Version).IsEqualTo((ushort)200);
+        await Assert.That(result.SignedRedirect.Span.SequenceEqual(
+            registration.StoredRegistration!.SignedRedirect.Span)).IsTrue();
+    }
+
+    [Test]
+    [Arguments(false, 0x82)]
+    [Arguments(true, 0x06)]
+    public async Task DeviceStopsBeforeProofWhenTo1AcknowledgmentLacksRequestedSupport(bool delegated, int flags)
+    {
+        using var run = new Fixture();
+        using var registration = delegated
+            ? run.CreateServer(FdoRendezvousProtocol.OwnerRegistration)
+            : run.Rendezvous.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
+        if (delegated)
+        {
+            await run.RegisterAsync(registration);
+        }
+        else
+        {
+            await run.Rendezvous.CreateOwner().RunAsync(run.Rendezvous.CreateTransport(registration));
+        }
+
+        using var lookup = delegated
+            ? run.CreateServer(FdoRendezvousProtocol.DeviceLookup)
+            : run.Rendezvous.CreateServer(FdoRendezvousProtocol.DeviceLookup);
+        var transport = run.Rendezvous.CreateTransport(lookup);
+        transport.Change = message => message.Type == FdoRendezvousMessageType.DeviceHelloAck
+            ? message with { Body = RewriteInitial(message, [(byte)flags]) }
+            : message;
+
+        await ExpectAsync<NotSupportedException>(async () =>
+            await run.Rendezvous.CreateDevice(delegated).RunAsync(transport));
+        await Assert.That(transport.Messages.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task UnsolicitedTo1DelegationAdvertisementDoesNotAuthorizeADelegatedRedirect()
+    {
+        using var run = new Fixture();
+        using var registration = run.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
+        await run.RegisterAsync(registration);
 
         using var lookup = run.CreateServer(FdoRendezvousProtocol.DeviceLookup);
-        var transport = run.Rendezvous.CreateTransport(device ? lookup : registration);
-        transport.Change = message =>
-            message.Type is FdoRendezvousMessageType.OwnerHelloAck or FdoRendezvousMessageType.DeviceHelloAck
-                ? message with { Body = RewriteInitial(message, [0x87]) } : message;
-        await ExpectAsync<NotSupportedException>(async () =>
+        var transport = run.Rendezvous.CreateTransport(lookup);
+        transport.Change = message => message.Type switch
         {
-            if (device)
-            {
-                await run.Rendezvous.CreateDevice(true).RunAsync(transport);
-            }
-            else
-            {
-                await run.Rendezvous.CreateOwner(delegateKey: run.Key, delegateCertificates: [run.Leaf]).RunAsync(transport);
-            }
-        });
+            FdoRendezvousMessageType.DeviceHello => message with { Body = RewriteInitial(message, [0x84]) },
+            FdoRendezvousMessageType.DeviceHelloAck => message with { Body = RewriteInitial(message, [0x86]) },
+            _ => message
+        };
+        await ExpectAsync<NotSupportedException>(async () => await run.Rendezvous.CreateDevice().RunAsync(transport));
+
+        await Assert.That(Flags(transport.Messages[0].Body)).IsEqualTo((byte)0x04);
+        await Assert.That(transport.Messages.Count).IsEqualTo(4);
+        await Assert.That(transport.Messages[3].Type).IsEqualTo(FdoRendezvousMessageType.Redirect);
+    }
+
+    [Test]
+    public async Task OwnerStillRejectsMixedTo0Acknowledgment()
+    {
+        using var run = new Fixture();
+        using var registration = run.CreateServer(FdoRendezvousProtocol.OwnerRegistration);
+        var transport = run.Rendezvous.CreateTransport(registration);
+        transport.Change = message =>
+            message.Type == FdoRendezvousMessageType.OwnerHelloAck
+                ? message with { Body = RewriteInitial(message, [0x87]) } : message;
+        FdoOwnerRendezvousSession owner = run.Rendezvous.CreateOwner(
+            delegateKey: run.Key, delegateCertificates: [run.Leaf]);
+        await ExpectAsync<NotSupportedException>(async () => await owner.RunAsync(transport));
         await Assert.That(transport.Messages.Count).IsEqualTo(2);
     }
 
@@ -699,7 +774,7 @@ public sealed class FdoDelegatedRendezvousTests
             var request = new CertificateRequest("CN=Redirect Delegate", Key, HashAlgorithmName.SHA256);
             request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
             request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
-            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new(permission) }, false));
+            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension([new Oid(permission)], false));
             using X509Certificate2 certificate = request.Create(
                 new X500DistinguishedName("CN=Voucher Owner"),
                 X509SignatureGenerator.CreateForECDsa(Authentication.Voucher.FinalOwner),

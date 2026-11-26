@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -9,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fdo.Cryptography;
 using Fdo.Rendezvous;
-using Fdo.Serialization;
 using AuthenticationFixture = Fdo.Tests.Cryptography.FdoTo2OwnerDeviceAuthenticatorTests.Fixture;
 
 namespace Fdo.Tests.Rendezvous;

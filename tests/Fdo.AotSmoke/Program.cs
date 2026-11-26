@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -610,8 +612,7 @@ internal static partial class Program
         public ValueTask PersistVoucherAsync(FdoManufacturerInitializeVoucher voucher, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Require(_proposal is not null &&
-                _proposal.EncodedVoucherHeaderTag.Span.SequenceEqual(voucher.EncodedVoucherHeaderTag.Span),
+            Require(_proposal?.EncodedVoucherHeaderTag.Span.SequenceEqual(voucher.EncodedVoucherHeaderTag.Span) == true,
                 "The retained voucher does not match the manufacturer proposal.");
             Voucher = voucher;
             return ValueTask.CompletedTask;
@@ -642,7 +643,7 @@ internal static partial class Program
             cancellationToken.ThrowIfCancellationRequested();
             FdoRendezvousRegistration? registration = Registration;
             return ValueTask.FromResult(
-                registration is not null && registration.DeviceGuid.Span.SequenceEqual(deviceGuid.Span)
+                registration?.DeviceGuid.Span.SequenceEqual(deviceGuid.Span) == true
                     ? registration : null);
         }
 
@@ -711,10 +712,10 @@ internal static partial class Program
 
     private enum OwnerKeyKind
     {
-        P256,
-        P384,
-        Rsa2048,
-        Rsa3072,
+        P256 = 0,
+        P384 = 1,
+        Rsa2048 = 2,
+        Rsa3072 = 3,
     }
 
     private sealed record SmokeScenario(

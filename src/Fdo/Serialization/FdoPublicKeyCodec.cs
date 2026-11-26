@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -42,6 +44,17 @@ public sealed class FdoPublicKeyCodec
     /// Returns an owned public key and the exact encoded FDO PublicKey bytes.
     /// The caller must dispose the returned key and establish its provenance.
     /// </summary>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <exception cref="CborContentException">
+    /// An FDO PublicKey must contain three fields. An X.509 FDO public key body must be a byte string.
+    /// </exception>
+    /// <exception cref="NotSupportedException">
+    /// The FDO public key encoding is not supported for this key type. The FDO public key type is not supported.
+    /// </exception>
+    /// <exception cref="CryptographicException">
+    /// The FDO public key has trailing SubjectPublicKeyInfo data. The FDO public key type does not match its named
+    /// curve.
+    /// </exception>
     internal DecodedKey Decode(ReadOnlyMemory<byte> encoded)
     {
         ReadOnlyMemory<byte> copy = _cbor.ValidateAndCopy(encoded);
@@ -138,11 +151,13 @@ public sealed class FdoPublicKeyCodec
     }
 
     /// <summary>Encodes a leaf-first DER certificate chain as an ECDSA FDO PublicKey.</summary>
+    /// <param name="certificates">The ordered certificates to process.</param>
     /// <remarks>
     /// The first certificate must contain a P-256 or P-384 end-entity key.
     /// The caller authorizes this key and any use of attached certificates.
     /// This conversion does not establish certificate trust or support a CA Owner.
     /// </remarks>
+    /// <exception cref="CryptographicException">An FDO X5CHAIN leaf must contain an ECDSA public key.</exception>
     public ReadOnlyMemory<byte> EncodeCertificateChain(IReadOnlyList<ReadOnlyMemory<byte>> certificates)
     {
         var chains = new FdoX5ChainCodec();
@@ -382,6 +397,9 @@ public sealed class FdoPublicKeyCodec
         /// Verifies an X.509 signature made directly by this key. The signature
         /// algorithm must use the hash that FDO binds to the key type.
         /// </summary>
+        /// <param name="signedData">The exact message bytes covered by the signature.</param>
+        /// <param name="signature">The signature to verify.</param>
+        /// <param name="signatureAlgorithmOid">The object identifier of the signature algorithm.</param>
         internal bool VerifyCertificateSignature(
             ReadOnlySpan<byte> signedData, ReadOnlySpan<byte> signature, string signatureAlgorithmOid)
         {
@@ -409,6 +427,10 @@ public sealed class FdoPublicKeyCodec
         }
 
         /// <summary>Compares public key material, not encoded certificate or key bytes.</summary>
+        /// <param name="other">The value to compare with this one.</param>
+        /// <exception cref="CryptographicException">
+        /// The FDO RSA public key is incomplete. The FDO public key does not contain a complete EC point.
+        /// </exception>
         public bool HasSamePublicKey(DecodedKey other)
         {
             ArgumentNullException.ThrowIfNull(other);

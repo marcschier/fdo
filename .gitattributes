@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.snk binary
+
+# Patch context lines start with a space before Go's tab indentation.
+interop/*.patch whitespace=-space-before-tab

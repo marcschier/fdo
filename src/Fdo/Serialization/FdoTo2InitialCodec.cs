@@ -1,5 +1,8 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
 using System.Text;
@@ -42,7 +45,7 @@ internal sealed class FdoTo2InitialCodec
         byte[] guid = CopyIdentifier(message.Guid, nameof(message));
         byte[] sugar = CopyIdentifier(message.Sugar, nameof(message));
         long[] hashes = CopyNumbers(message.HashTypes, "hash types", out long hashBytes);
-        long size = 2L * (1 + IdentifierLength) + IntegerSize(message.MaxDeviceMessageSize) +
+        long size = (2L * (1 + IdentifierLength)) + IntegerSize(message.MaxDeviceMessageSize) +
             FdoCborCodec.GetHeaderSize((ulong)hashes.Length) + hashBytes;
         int additionalItems = CheckAdditionalItems(4L + hashes.Length);
         FdoCapabilityFields.Prepared fields = FdoCapabilityFields.Prepare(
@@ -69,7 +72,7 @@ internal sealed class FdoTo2InitialCodec
         string[] exchanges = CopyNames(message.KeyExchangeSuites, out long exchangeBytes);
         long[] ciphers = CopyNumbers(message.CipherSuites, "cipher suites", out long cipherBytes);
         ReadOnlyMemory<byte> hashPrev = message.HashPrev.Encode();
-        long size = 2L * (1 + IdentifierLength) + IntegerSize(message.MaxOwnerMessageSize) +
+        long size = (2L * (1 + IdentifierLength)) + IntegerSize(message.MaxOwnerMessageSize) +
             FdoCborCodec.GetHeaderSize((ulong)exchanges.Length) + exchangeBytes +
             FdoCborCodec.GetHeaderSize((ulong)ciphers.Length) + cipherBytes + hashPrev.Length;
         int additionalItems = CheckAdditionalItems(8L + exchanges.Length + ciphers.Length);
@@ -100,6 +103,8 @@ internal sealed class FdoTo2InitialCodec
     /// Hashes the exact probe bytes with a SHA-2 algorithm offered by the
     /// Device. This paired profile does not append the manufacturer-key hash.
     /// </summary>
+    /// <param name="algorithm">The algorithm to use for this operation.</param>
+    /// <param name="encodedProbe">The exact encoded initial probe from the exchange.</param>
     public FdoHashValue ComputeProbeHash(FdoHashAlgorithm algorithm, ReadOnlyMemory<byte> encodedProbe)
     {
         ReadOnlyMemory<byte> copy = _cbor.ValidateAndCopy(encodedProbe);
@@ -114,6 +119,11 @@ internal sealed class FdoTo2InitialCodec
     /// returns the hash that must be included in the signed Device proof.
     /// This does not establish peer trust or verify a voucher.
     /// </summary>
+    /// <param name="sentProbe">The exact probe bytes sent to the peer.</param>
+    /// <param name="receivedAcknowledgement">The exact acknowledgement bytes received from the peer.</param>
+    /// <exception cref="CryptographicException">
+    /// The acknowledgement GUID does not match the probe. The acknowledgement hash does not match the probe.
+    /// </exception>
     public CheckedAcknowledgement CheckAcknowledgement(
         ReadOnlyMemory<byte> sentProbe,
         ReadOnlyMemory<byte> receivedAcknowledgement)
@@ -145,6 +155,9 @@ internal sealed class FdoTo2InitialCodec
     /// the Owner. The caller must separately verify the Device signature,
     /// nonce, GUID, selected suites, voucher, and trust.
     /// </summary>
+    /// <param name="sentAcknowledgement">The exact acknowledgement bytes sent to the peer.</param>
+    /// <param name="hashPrev2">The authenticated digest of the preceding voucher data.</param>
+    /// <exception cref="CryptographicException">The Device proof hash does not match the acknowledgement.</exception>
     public void VerifyAcknowledgementHash(ReadOnlyMemory<byte> sentAcknowledgement, FdoHashValue hashPrev2)
     {
         ArgumentNullException.ThrowIfNull(hashPrev2);
@@ -163,6 +176,10 @@ internal sealed class FdoTo2InitialCodec
     /// Checks that the paired key-exchange and cipher selections appeared in the exact Owner
     /// acknowledgement. Key compatibility and signature checks remain separate.
     /// </summary>
+    /// <param name="encodedAcknowledgement">The exact encoded acknowledgement from the exchange.</param>
+    /// <param name="exchange">The selected key exchange suite.</param>
+    /// <param name="cipher">The cipher suite selected for protected messages.</param>
+    /// <exception cref="CryptographicException">The selected key exchange or cipher was not offered.</exception>
     public void RequireOfferedSuites(
         ReadOnlyMemory<byte> encodedAcknowledgement,
         FdoKeyExchangeSuite exchange,
@@ -309,7 +326,7 @@ internal sealed class FdoTo2InitialCodec
         return value;
     }
 
-    private static IReadOnlyList<long> ReadNumbers(CborReader reader)
+    private static ReadOnlyCollection<long> ReadNumbers(CborReader reader)
     {
         int count = ReadNonEmptyArrayLength(reader);
         var result = new long[count];
@@ -322,7 +339,7 @@ internal sealed class FdoTo2InitialCodec
         return Array.AsReadOnly(result);
     }
 
-    private static IReadOnlyList<string> ReadNames(CborReader reader)
+    private static ReadOnlyCollection<string> ReadNames(CborReader reader)
     {
         int count = ReadNonEmptyArrayLength(reader);
         var result = new string[count];
@@ -377,9 +394,9 @@ internal sealed class FdoTo2InitialCodec
         return (ushort)value;
     }
 
-    private static void WriteNumbers(CborWriter writer, IReadOnlyList<long> values)
+    private static void WriteNumbers(CborWriter writer, ReadOnlySpan<long> values)
     {
-        writer.WriteStartArray(values.Count);
+        writer.WriteStartArray(values.Length);
         foreach (long value in values)
         {
             writer.WriteInt64(value);

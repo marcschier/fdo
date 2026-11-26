@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Threading.Tasks;
@@ -16,12 +18,11 @@ public sealed class FdoTo2CompletionCodecTests
     [Test]
     public async Task DoneForCredentialReuseEncodesNonceThenNull()
     {
-        var codec = new FdoTo2CompletionCodec();
         byte[] nonce = Convert.FromHexString(NonceHex);
         byte[] expected = Convert.FromHexString("8250" + NonceHex + "F6");
 
-        ReadOnlyMemory<byte> encoded = codec.EncodeDone(nonce, null);
-        FdoTo2CompletionCodec.Done20 decoded = codec.DecodeDone(expected);
+        ReadOnlyMemory<byte> encoded = FdoTo2CompletionCodec.EncodeDone(nonce, null);
+        FdoTo2CompletionCodec.Done20 decoded = FdoTo2CompletionCodec.DecodeDone(expected);
 
         await Assert.That(Convert.ToHexString(encoded.Span)).IsEqualTo(Convert.ToHexString(expected));
         await Assert.That(Convert.ToHexString(decoded.Nonce.Span)).IsEqualTo(NonceHex);
@@ -34,13 +35,12 @@ public sealed class FdoTo2CompletionCodecTests
     public async Task DoneForReplacementEncodesNonceThenHmac(
         int algorithm, string hmacHex, string byteStringHeader)
     {
-        var codec = new FdoTo2CompletionCodec();
         byte[] nonce = Convert.FromHexString(NonceHex);
         var hmac = new FdoHashValue((FdoHashAlgorithm)algorithm, Convert.FromHexString(hmacHex));
         string expected = "8250" + NonceHex + "820" + algorithm + byteStringHeader + hmacHex;
 
-        ReadOnlyMemory<byte> encoded = codec.EncodeDone(nonce, hmac);
-        FdoTo2CompletionCodec.Done20 decoded = codec.DecodeDone(Convert.FromHexString(expected));
+        ReadOnlyMemory<byte> encoded = FdoTo2CompletionCodec.EncodeDone(nonce, hmac);
+        FdoTo2CompletionCodec.Done20 decoded = FdoTo2CompletionCodec.DecodeDone(Convert.FromHexString(expected));
         FdoHashValue decodedHmac = decoded.ReplacementHmac
             ?? throw new InvalidOperationException("The replacement HMAC was absent.");
 
@@ -53,12 +53,11 @@ public sealed class FdoTo2CompletionCodecTests
     [Test]
     public async Task DoneAckContainsOnlyTheSetupNonce()
     {
-        var codec = new FdoTo2CompletionCodec();
         byte[] nonce = Convert.FromHexString(NonceHex);
-        string expected = "8150" + NonceHex;
+        const string expected = "8150" + NonceHex;
 
-        ReadOnlyMemory<byte> encoded = codec.EncodeDoneAck(nonce);
-        ReadOnlyMemory<byte> decoded = codec.DecodeDoneAck(Convert.FromHexString(expected));
+        ReadOnlyMemory<byte> encoded = FdoTo2CompletionCodec.EncodeDoneAck(nonce);
+        ReadOnlyMemory<byte> decoded = FdoTo2CompletionCodec.DecodeDoneAck(Convert.FromHexString(expected));
 
         await Assert.That(Convert.ToHexString(encoded.Span)).IsEqualTo(expected);
         await Assert.That(Convert.ToHexString(decoded.Span)).IsEqualTo(NonceHex);
@@ -80,9 +79,8 @@ public sealed class FdoTo2CompletionCodecTests
     [Arguments("8250000102030405060708090A0B0C0D0E0FF600")]
     public async Task DecodeDoneRejectsMalformedBodiesAndNonHmacAlgorithms(string hex)
     {
-        var codec = new FdoTo2CompletionCodec();
-
-        await Assert.That(Throws<CborContentException>(() => codec.DecodeDone(Convert.FromHexString(hex)))).IsTrue();
+        await Assert.That(Throws<CborContentException>(() =>
+            FdoTo2CompletionCodec.DecodeDone(Convert.FromHexString(hex)))).IsTrue();
     }
 
     [Test]
@@ -94,36 +92,35 @@ public sealed class FdoTo2CompletionCodecTests
     [Arguments("8150000102030405060708090A0B0C0D0E0F00")]
     public async Task DecodeDoneAckRejectsMalformedBodies(string hex)
     {
-        var codec = new FdoTo2CompletionCodec();
-
-        await Assert.That(Throws<CborContentException>(() => codec.DecodeDoneAck(Convert.FromHexString(hex)))).IsTrue();
+        await Assert.That(Throws<CborContentException>(() =>
+            FdoTo2CompletionCodec.DecodeDoneAck(Convert.FromHexString(hex)))).IsTrue();
     }
 
     [Test]
     public async Task EncodingRejectsWrongNonceLengthsAndDigestAsReplacementHmac()
     {
-        var codec = new FdoTo2CompletionCodec();
         var digest = new FdoHashValue(FdoHashAlgorithm.Sha256, new byte[32]);
         byte[] nonce = Convert.FromHexString(NonceHex);
 
-        await Assert.That(Throws<ArgumentException>(() => codec.EncodeDone(new byte[15], null))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => codec.EncodeDone(new byte[17], null))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => codec.EncodeDoneAck(new byte[15]))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => codec.EncodeDoneAck(new byte[17]))).IsTrue();
-        await Assert.That(Throws<ArgumentException>(() => codec.EncodeDone(nonce, digest))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            FdoTo2CompletionCodec.EncodeDone(new byte[15], null))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() =>
+            FdoTo2CompletionCodec.EncodeDone(new byte[17], null))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() => FdoTo2CompletionCodec.EncodeDoneAck(new byte[15]))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() => FdoTo2CompletionCodec.EncodeDoneAck(new byte[17]))).IsTrue();
+        await Assert.That(Throws<ArgumentException>(() => FdoTo2CompletionCodec.EncodeDone(nonce, digest))).IsTrue();
     }
 
     [Test]
     public async Task DecodedNoncesAndEncodedBodiesOwnTheirInputBytes()
     {
-        var codec = new FdoTo2CompletionCodec();
         byte[] input = Convert.FromHexString("8250" + NonceHex + "F6");
         byte[] ackInput = Convert.FromHexString("8150" + NonceHex);
         byte[] nonce = Convert.FromHexString(NonceHex);
 
-        FdoTo2CompletionCodec.Done20 decoded = codec.DecodeDone(input);
-        ReadOnlyMemory<byte> decodedAck = codec.DecodeDoneAck(ackInput);
-        ReadOnlyMemory<byte> encoded = codec.EncodeDone(nonce, null);
+        FdoTo2CompletionCodec.Done20 decoded = FdoTo2CompletionCodec.DecodeDone(input);
+        ReadOnlyMemory<byte> decodedAck = FdoTo2CompletionCodec.DecodeDoneAck(ackInput);
+        ReadOnlyMemory<byte> encoded = FdoTo2CompletionCodec.EncodeDone(nonce, null);
         Array.Fill(input, (byte)0);
         Array.Fill(ackInput, (byte)0);
         Array.Fill(nonce, (byte)0);

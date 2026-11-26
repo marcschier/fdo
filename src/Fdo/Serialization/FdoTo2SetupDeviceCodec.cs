@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -36,10 +38,18 @@ internal sealed class FdoTo2SetupDeviceCodec
     /// Delegate leaf key when the Owner proof was delegated. Credential reuse
     /// requires explicit Owner opt-in; this does not authorize enrollment.
     /// </summary>
+    /// <param name="authenticatedDevice">The verified identity and proof of the enrolling Device.</param>
+    /// <param name="ownerSigningKey">The private key used to sign as the Owner.</param>
+    /// <param name="allowCredentialReuse">Whether the Device may retain its existing FDO credential.</param>
+    /// <param name="maxDeviceServiceInfoSize">The maximum encoded Device ServiceInfo body size, in bytes.</param>
+    /// <param name="delegateKey">The verified Delegate public key.</param>
     /// <remarks>
     /// <paramref name="delegateKey"/> is the FDO PublicKey of the Delegate leaf
     /// that signed the Owner proof, or empty for a nondelegated run.
     /// </remarks>
+    /// <exception cref="CryptographicException">
+    /// The SetupDevice signing key is not the verified voucher Owner key.
+    /// </exception>
     public ReadOnlyMemory<byte> Sign(
         FdoTo2OwnerDeviceAuthenticator.AuthenticatedDevice authenticatedDevice,
         AsymmetricAlgorithm ownerSigningKey,
@@ -86,6 +96,15 @@ internal sealed class FdoTo2SetupDeviceCodec
     /// explicitly select rendezvous bypass, decrypt the current protected
     /// message, and check the Delegate reuse permission.
     /// </summary>
+    /// <param name="verifiedOwner">The verified Owner proof and identity.</param>
+    /// <param name="encoded">The encoded CBOR value to read or verify.</param>
+    /// <param name="allowCredentialReuse">Whether the Device may retain its existing FDO credential.</param>
+    /// <exception cref="CborContentException">
+    /// Credential reuse cannot contain replacement credentials. SetupDevice20 must contain three fields. The Device
+    /// ServiceInfo size must be uint16 or null. The Device ServiceInfo size must fit in uint16. The SetupDevice20
+    /// disposition must be an unsigned integer.
+    /// </exception>
+    /// <exception cref="NotSupportedException">Only credential reuse is supported in the paired setup.</exception>
     public ushort? Verify(
         FdoTo2OwnerProofCodec.OwnerProof verifiedOwner,
         ReadOnlyMemory<byte> encoded,
