@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography;
 
@@ -30,7 +32,7 @@ internal static class FdoDeviceHmacSecretPolicy
         if (actualLength != requiredLength)
         {
             throw new ArgumentException(
-                $"The Device HMAC secret must contain exactly {requiredLength} bytes.", "actualLength");
+                $"The Device HMAC secret must contain exactly {requiredLength} bytes.", nameof(actualLength));
         }
     }
 }

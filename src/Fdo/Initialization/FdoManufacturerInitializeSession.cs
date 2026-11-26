@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -16,7 +18,6 @@ public sealed class FdoManufacturerInitializeRequest
 {
     private readonly byte[]? _manufacturingInfo;
     private readonly byte[] _capabilityFlags;
-    private readonly IReadOnlyList<string> _vendorCapabilities;
 
     internal FdoManufacturerInitializeRequest(Guid runId, FdoDeviceInitializeCodec.AppStart message)
     {
@@ -29,7 +30,7 @@ public sealed class FdoManufacturerInitializeRequest
             vendors[i] = message.VendorCapabilities[i];
         }
 
-        _vendorCapabilities = Array.AsReadOnly(vendors);
+        VendorCapabilities = Array.AsReadOnly(vendors);
     }
 
     /// <summary>The local identifier for this manufacturing run.</summary>
@@ -39,7 +40,7 @@ public sealed class FdoManufacturerInitializeRequest
     public ReadOnlyMemory<byte> CapabilityFlags => (byte[])_capabilityFlags.Clone();
 
     /// <summary>The Device's advertised vendor capabilities.</summary>
-    public IReadOnlyList<string> VendorCapabilities => _vendorCapabilities;
+    public IReadOnlyList<string> VendorCapabilities { get; }
 
     /// <summary>
     /// The optional encoded CBOR manufacturing information. It is lookup
@@ -439,10 +440,10 @@ public sealed class FdoManufacturerInitializeSession : IDisposable
 
     private enum Phase
     {
-        AppStart,
-        SetHmac,
-        Complete,
-        Failed,
-        Disposed,
+        AppStart = 0,
+        SetHmac = 1,
+        Complete = 2,
+        Failed = 3,
+        Disposed = 4,
     }
 }

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using Fdo.Cryptography;
@@ -51,7 +53,7 @@ internal sealed class FdoTo2CompletionCodec
     public ReadOnlyMemory<byte> EncodeDone(ReadOnlyMemory<byte> nonce, FdoHashValue? replacementHmac)
     {
         RequireNonce(nonce);
-        if (replacementHmac is not null && !replacementHmac.IsHmac)
+        if (replacementHmac?.IsHmac == false)
         {
             throw new ArgumentException("ReplacementHMac must use an HMAC algorithm.", nameof(replacementHmac));
         }

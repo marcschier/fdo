@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -243,10 +245,10 @@ public interface IFdoRendezvousRegistrationStore
 public enum FdoRendezvousProtocol
 {
     /// <summary>One Owner registration using TO0.</summary>
-    OwnerRegistration,
+    OwnerRegistration = 0,
 
     /// <summary>One Device lookup using TO1.</summary>
-    DeviceLookup,
+    DeviceLookup = 1,
 }
 
 /// <summary>Trust, storage, and resource limits for one Rendezvous Server session.</summary>

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
@@ -7,10 +9,10 @@ namespace Fdo.Cryptography;
 
 internal enum FdoCoseSignatureAlgorithm
 {
-    ES256 = -7,
-    ES384 = -35,
-    RS256 = -257,
     RS384 = -258,
+    RS256 = -257,
+    ES384 = -35,
+    ES256 = -7,
 }
 
 /// <summary>

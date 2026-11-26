@@ -4,9 +4,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest</AnalysisLevel>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <Deterministic>true</Deterministic>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <IsPackable>false</IsPackable>
+    <FdoStrongNameKey>$(MSBuildThisFileDirectory)eng\Fdo.snk</FdoStrongNameKey>
+    <FdoPublicKey>0024000004800000140100000602000000240000525341310008000001000100d99c3738e8e18faab5fec7c6670def3a5a9c8f2fa120ccd10714008cb4ba7a450d110fa525305b469822ea77183cfdd4548462031831870102e51b83a0b7deae3e5c5539917445bbcfa123f61a7a19c0dca6fbc9fa863ee47106cb28a2fbaa01d35efd65c91813b172c3130fd46e961ba4adb56913b9d4d6583ae277801f9d0184f135b8454765aa2c69711c5f7b63fb4ed0e77c2192b8ec8648f406eecc2a39adfec61917ed6fc6332f6041a1d96d90285caeaba2836915f9a158e3de3d0d0590b985965c2d7d29acdde39cf337af1a35f067931a8546d591de941ae792d87a87fc3626e6b5475f267a78c45973d9d9746dc7b0a4125e0c49bb1016b4d5c9c8</FdoPublicKey>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.Formatting.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -193,8 +195,10 @@ public sealed class FdoAtomicRendezvousStoreTests
         }
     }
 
-    // Test adapter: serializes transactions between instances in this process.
-    // Reopen tests file persistence and lost acknowledgment, not power-loss durability.
+    /// <summary>
+    /// Test adapter: serializes transactions between instances in this process.
+    /// Reopen tests file persistence and lost acknowledgment, not power-loss durability.
+    /// </summary>
     private sealed class JournalStore(string path, object gate, Func<DateTimeOffset> utcNow, bool loseAcknowledgment)
         : IFdoAtomicRendezvousRegistrationStore
     {

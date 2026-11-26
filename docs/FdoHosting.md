@@ -166,10 +166,12 @@ available within its session lifetime. The Device runner doesn't retry
 automatically.
 
 A delegated blob with multiple addresses requires an explicit
-`RendezvousAddressIndex`. The Device checks the transport's declared HTTP
-origin before using the result, then verifies that same address in the signed
-blob before accepting the redirect. This check does not verify the resolved
-IP address. The host still chooses the candidate and admits the connection.
+`RendezvousAddressIndex`. A custom Device transport must also implement
+`IFdoHttpPeer` and expose its declared HTTP origin through
+`IFdoHttpPeer.BaseAddress`. The Device checks that origin before using the
+result, then verifies the selected address in the signed blob before
+accepting the redirect. This check does not verify the resolved IP address.
+The host still chooses the candidate and admits the connection.
 
 `FdoRendezvousInfo.Parse` reads the encoded RendezvousInfo from a Device
 credential. `ParseVoucherHeader` reads it from an encoded voucher header tag.
@@ -662,8 +664,11 @@ one server role to one run. The host supplies the raw request target, all
 authorization and content-type values, a request-framed body stream, and the
 validated content length when known. The binding requires `POST`, the
 provisional `/fdo/200/msg/{message-type}` route, one `application/cbor`
-content type, and the correct session token. An optional `pathPrefix` must
-match the client's base path. Its `maxRequestBytes` bounds body reads from
+content type, and the correct session token. Supply `pathPrefix` in the
+client's escaped path form, without the trailing slash. The built-in
+client takes that prefix from its base URI's `AbsolutePath`; the binding
+compares it directly with the raw request target and doesn't escape it.
+`maxRequestBytes` bounds body reads from
 1 through 65,535 bytes. The host must reject invalid HTTP
 framing, bound concurrent sessions and their lifetimes, and register the
 issued bearer token before sending the first response. It must route later
@@ -675,8 +680,12 @@ the `Authorization` header. If `EncodedBody` isn't empty, send it as
 Serialize request handling with response handoff. After sending a complete
 nonterminal response, call `ConfirmResponseSent`; do not confirm a response
 whose `IsTerminal` is true. Confirmation records the handoff, not peer
-receipt. Dispose the binding if delivery fails or is uncertain, remove its
-token when the run ends, and reconcile retained state before retrying.
+receipt. Dispose the binding if delivery fails or is uncertain,
+and reconcile retained state before retrying. Remove the token when the
+run ends. If your host permits an `RVMore` repeat of the final page,
+don't remove its token just because `IsComplete` becomes true. Retain the
+same binding and token within the configured session lifetime so the
+server can check eligibility for one exact repeat.
 The binding owns its role session but doesn't host the HTTP listener.
 
 <details>

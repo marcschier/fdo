@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -46,30 +48,30 @@ internal static class FdoPairedProtocol
 
     public static IFdoPairedKeyExchange CreateDeviceExchange(
         FdoKeyExchangeSuite suite, ReadOnlyMemory<byte> provisionedOwnerKey) => suite switch
-    {
-        FdoKeyExchangeSuite.Ecdh256 or FdoKeyExchangeSuite.Ecdh384 =>
-            FdoEcdhKeyExchange.Create(suite, FdoEcdhParty.Device),
-        FdoKeyExchangeSuite.DhkexId14 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId14),
-        FdoKeyExchangeSuite.DhkexId15 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId15),
-        FdoKeyExchangeSuite.Asymkex2048 or FdoKeyExchangeSuite.Asymkex3072 =>
-            CreateAsymDeviceExchange(suite, provisionedOwnerKey),
-        _ => throw new ArgumentOutOfRangeException(nameof(suite)),
-    };
+        {
+            FdoKeyExchangeSuite.Ecdh256 or FdoKeyExchangeSuite.Ecdh384 =>
+                FdoEcdhKeyExchange.Create(suite, FdoEcdhParty.Device),
+            FdoKeyExchangeSuite.DhkexId14 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId14),
+            FdoKeyExchangeSuite.DhkexId15 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId15),
+            FdoKeyExchangeSuite.Asymkex2048 or FdoKeyExchangeSuite.Asymkex3072 =>
+                CreateAsymDeviceExchange(suite, provisionedOwnerKey),
+            _ => throw new ArgumentOutOfRangeException(nameof(suite)),
+        };
 
     public static IFdoPairedKeyExchange CreateOwnerExchange(
         FdoKeyExchangeSuite suite, AsymmetricAlgorithm ownerKey) => suite switch
-    {
-        FdoKeyExchangeSuite.Ecdh256 or FdoKeyExchangeSuite.Ecdh384 =>
-            FdoEcdhKeyExchange.Create(suite, FdoEcdhParty.Owner),
-        FdoKeyExchangeSuite.DhkexId14 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId14),
-        FdoKeyExchangeSuite.DhkexId15 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId15),
-        FdoKeyExchangeSuite.Asymkex2048 or FdoKeyExchangeSuite.Asymkex3072 =>
-            FdoAsymKeyExchange.Create(
-                suite == FdoKeyExchangeSuite.Asymkex2048 ? FdoAsymSuite.Asym2048 : FdoAsymSuite.Asym3072,
-                FdoAsymParty.Owner,
-                ownerKey as RSA ?? throw new CryptographicException("Paired ASYMKEX requires an RSA Owner key.")),
-        _ => throw new ArgumentOutOfRangeException(nameof(suite)),
-    };
+        {
+            FdoKeyExchangeSuite.Ecdh256 or FdoKeyExchangeSuite.Ecdh384 =>
+                FdoEcdhKeyExchange.Create(suite, FdoEcdhParty.Owner),
+            FdoKeyExchangeSuite.DhkexId14 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId14),
+            FdoKeyExchangeSuite.DhkexId15 => FdoDhKeyExchange.Create(FdoDhGroup.DhkexId15),
+            FdoKeyExchangeSuite.Asymkex2048 or FdoKeyExchangeSuite.Asymkex3072 =>
+                FdoAsymKeyExchange.Create(
+                    suite == FdoKeyExchangeSuite.Asymkex2048 ? FdoAsymSuite.Asym2048 : FdoAsymSuite.Asym3072,
+                    FdoAsymParty.Owner,
+                    ownerKey as RSA ?? throw new CryptographicException("Paired ASYMKEX requires an RSA Owner key.")),
+            _ => throw new ArgumentOutOfRangeException(nameof(suite)),
+        };
 
     private static FdoAsymKeyExchange CreateAsymDeviceExchange(
         FdoKeyExchangeSuite suite, ReadOnlyMemory<byte> provisionedOwnerKey)

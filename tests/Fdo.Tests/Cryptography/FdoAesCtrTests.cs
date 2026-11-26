@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
@@ -8,7 +10,12 @@ namespace Fdo.Tests.Cryptography;
 [UnsupportedOSPlatform("browser")]
 public sealed class FdoAesCtrTests
 {
-    // NIST SP 800-38A, F.5.1 and F.5.5.
+    /// <summary>
+    /// NIST SP 800-38A, F.5.1 and F.5.5.
+    /// </summary>
+    /// <param name="keyHex"></param>
+    /// <param name="ciphertextHex"></param>
+    /// <returns></returns>
     [Test]
     [Arguments(
         "2B7E151628AED2A6ABF7158809CF4F3C",
@@ -128,7 +135,8 @@ public sealed class FdoAesCtrTests
         for (int i = 0; i < blocks; i++)
         {
             counterBlock.AsSpan(0, 12).CopyTo(counters.AsSpan(i * 16));
-            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(counters.AsSpan(i * 16 + 12), counter + (uint)i);
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(
+                counters.AsSpan((i * 16) + 12), counter + (uint)i);
         }
 
         byte[] keystream = aes.EncryptEcb(counters, System.Security.Cryptography.PaddingMode.None);

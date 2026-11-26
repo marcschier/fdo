@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -241,8 +243,11 @@ public sealed class FdoDelegateChainVerifierTests
 
         Exception? unpermitted = Capture(() => verified.Require(FdoDelegatePermissions.OnboardReuseCredentials));
 
-        await Assert.That(unpermitted is FdoDelegateNotPermittedException { Required:
-            FdoDelegatePermissions.OnboardReuseCredentials }).IsTrue();
+        await Assert.That(unpermitted is FdoDelegateNotPermittedException
+        {
+            Required:
+            FdoDelegatePermissions.OnboardReuseCredentials
+        }).IsTrue();
         await Assert.That(Reason(() => Verifier().Verify(Memories(tampered), fixture.OwnerKey, Now)))
             .IsEqualTo(FdoDelegateChainFailure.HopSignature);
     }

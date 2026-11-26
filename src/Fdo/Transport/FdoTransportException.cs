@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Net;
 
@@ -12,40 +14,40 @@ public enum FdoTransportFailure
     /// The request did not complete because of a connection failure or timeout.
     /// The sending role determines whether its session can continue.
     /// </summary>
-    Network,
+    Network = 0,
 
     /// <summary>
     /// The server returned an HTTP status that FDO 2.0 §4.3 and §5.1.1 do not
     /// permit for this request.
     /// </summary>
-    UnexpectedStatus,
+    UnexpectedStatus = 1,
 
     /// <summary>
     /// The response violated the FDO HTTP binding: missing or invalid
     /// Message-Type, a message type outside the session's sub-protocol, an
     /// empty or invalid CBOR body, or a redirect that the HTTP stack followed.
     /// </summary>
-    InvalidResponse,
+    InvalidResponse = 2,
 
     /// <summary>
     /// The server did not allocate a token on the first response, changed it
     /// later in the session, or received an invalid request token.
     /// </summary>
-    Authorization,
+    Authorization = 3,
 
     /// <summary>
     /// The response body exceeded the session's configured limit.
     /// </summary>
-    ResponseTooLarge,
+    ResponseTooLarge = 4,
 
     /// <summary>The HTTP request metadata or body framing is invalid.</summary>
-    InvalidRequest,
+    InvalidRequest = 5,
 
     /// <summary>The request body exceeded the configured limit.</summary>
-    RequestTooLarge,
+    RequestTooLarge = 6,
 
     /// <summary>The Rendezvous Server redirected the initial TO1 request.</summary>
-    RendezvousRedirect,
+    RendezvousRedirect = 7,
 }
 
 /// <summary>

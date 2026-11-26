@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -400,17 +402,17 @@ internal sealed class FdoCsrDeviceModule : IFdoDeviceServiceInfoModule, IDisposa
 
     private enum State
     {
-        Inactive,
-        CaRequestPrepared,
-        AwaitingCaResponse,
-        AttributesRequestPrepared,
-        AwaitingAttributesResponse,
-        AttributesReceived,
-        RequestPrepared,
-        AwaitingResponse,
-        ResponseReceived,
-        Disabled,
-        Failed,
+        Inactive = 0,
+        CaRequestPrepared = 1,
+        AwaitingCaResponse = 2,
+        AttributesRequestPrepared = 3,
+        AwaitingAttributesResponse = 4,
+        AttributesReceived = 5,
+        RequestPrepared = 6,
+        AwaitingResponse = 7,
+        ResponseReceived = 8,
+        Disabled = 9,
+        Failed = 10,
     }
 }
 

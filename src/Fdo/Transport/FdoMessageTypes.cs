@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 namespace Fdo.Transport;
 
 /// <summary>

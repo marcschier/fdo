@@ -1,0 +1,45 @@
+name: Go peer interoperability
+
+on:
+  push:
+    branches: ['validation/fdo-parity-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: interop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  peer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            10.0.404
+            11.0.100
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.26.10'
+          cache: false
+      - name: Build pinned peer and probe
+        run: |
+          bash interop/build-go-peer.sh "$PWD/bin/interop/fdo-go-peer"
+          dotnet publish interop/Fdo.PeerProbe -c Release -o bin/interop/probe
+      - name: Run isolated peer exchange
+        run: bash interop/run-go-peer.sh "$PWD/bin/interop" 2>&1 | tee interop-result.log
+        shell: bash
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always() && hashFiles('interop-result.log') != ''
+        with:
+          name: interop-result
+          path: interop-result.log
+          retention-days: 7

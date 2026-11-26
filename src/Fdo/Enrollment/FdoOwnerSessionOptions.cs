@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -10,69 +12,69 @@ namespace Fdo.Enrollment;
 public enum FdoPairedKeyExchangeSuite
 {
     /// <summary>NIST P-256 ECDH.</summary>
-    Ecdh256,
+    Ecdh256 = 0,
 
     /// <summary>NIST P-384 ECDH.</summary>
-    Ecdh384,
+    Ecdh384 = 1,
 
     /// <summary>RFC 3526 group 14 DH, with the paired fixed-width encoding.</summary>
-    DhkexId14,
+    DhkexId14 = 2,
 
     /// <summary>RFC 3526 group 15 DH, with the paired fixed-width encoding.</summary>
-    DhkexId15,
+    DhkexId15 = 3,
 
     /// <summary>Paired RSA-2048 OAEP key exchange.</summary>
-    Asymkex2048,
+    Asymkex2048 = 4,
 
     /// <summary>Paired RSA-3072 OAEP key exchange.</summary>
-    Asymkex3072,
+    Asymkex3072 = 5,
 }
 
 /// <summary>Authenticated encryption offered by the paired Owner profile.</summary>
 public enum FdoPairedCipherSuite
 {
     /// <summary>AES-128-GCM.</summary>
-    A128Gcm,
+    A128Gcm = 0,
 
     /// <summary>AES-256-GCM.</summary>
-    A256Gcm,
+    A256Gcm = 1,
 
     /// <summary>AES-128-CCM with a 13-byte nonce and 16-byte tag.</summary>
-    AesCcm16_128_128,
+    AesCcm16_128_128 = 2,
 
     /// <summary>AES-256-CCM with a 13-byte nonce and 16-byte tag.</summary>
-    AesCcm16_128_256,
+    AesCcm16_128_256 = 3,
 
     /// <summary>AES-128-CCM with a 7-byte nonce and 16-byte tag.</summary>
-    AesCcm64_128_128,
+    AesCcm64_128_128 = 4,
 
     /// <summary>AES-256-CCM with a 7-byte nonce and 16-byte tag.</summary>
-    AesCcm64_128_256,
+    AesCcm64_128_256 = 5,
 
     /// <summary>
     /// FDO 2.0 <c>CS_AES128_CTR_HMAC-SHA256</c> encrypt-then-MAC, using the
     /// provisional paired counter-block profile. Explicit opt-in only.
     /// </summary>
-    AesCtr128HmacSha256,
+    AesCtr128HmacSha256 = 6,
 
     /// <summary>
     /// FDO 2.0 <c>CS_AES256_CTR_HMAC-SHA384</c> encrypt-then-MAC with a 64-byte
     /// verification key, using the provisional paired counter-block profile.
     /// Explicit opt-in only.
     /// </summary>
-    AesCtr256HmacSha384,
+    AesCtr256HmacSha384 = 7,
 
     /// <summary>
     /// FDO 2.0 <c>CS_AES128_CBC_HMAC-SHA256</c> encrypt-then-MAC with a
     /// fresh random IV per message. Explicit opt-in only.
     /// </summary>
-    AesCbc128HmacSha256,
+    AesCbc128HmacSha256 = 8,
 
     /// <summary>
     /// FDO 2.0 <c>CS_AES256_CBC_HMAC-SHA384</c> encrypt-then-MAC with a
     /// fresh random IV per message. Explicit opt-in only.
     /// </summary>
-    AesCbc256HmacSha384,
+    AesCbc256HmacSha384 = 9,
 }
 
 /// <summary>Message types supported by the paired FDO 2.0 TO2 Owner.</summary>

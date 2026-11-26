@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -93,11 +95,8 @@ internal sealed class FdoVerifiedDelegateChain
 
     internal void RequireOfflineStatus(FdoDelegateOfflineRevocationPolicy? policy, DateTimeOffset now)
     {
-        if (policy is not null)
-        {
-            policy.Require(RevocationTargets ??
+        policy?.Require(RevocationTargets ??
                 throw new InvalidOperationException("The verified Delegate path was not retained for offline checking."), now);
-        }
     }
 
     /// <summary>Requires exactly one operation permission.</summary>
@@ -122,49 +121,49 @@ internal sealed class FdoVerifiedDelegateChain
 internal enum FdoDelegateChainFailure
 {
     /// <summary>The chain is empty or exceeds the configured certificate count or size limits.</summary>
-    ChainBounds,
+    ChainBounds = 0,
 
     /// <summary>A certificate or one of its recognized extensions is not valid DER.</summary>
-    MalformedCertificate,
+    MalformedCertificate = 1,
 
     /// <summary>A certificate is signed with an algorithm that FDO does not define.</summary>
-    UnsupportedSignatureAlgorithm,
+    UnsupportedSignatureAlgorithm = 2,
 
     /// <summary>A certificate repeats or contradicts a signed field, or uses a field this verifier does not process.</summary>
-    InconsistentSignedFields,
+    InconsistentSignedFields = 3,
 
     /// <summary>The Owner key did not sign the terminating certificate.</summary>
-    OwnerSignature,
+    OwnerSignature = 4,
 
     /// <summary>A certificate issuer name differs from the subject name of the next certificate.</summary>
-    IssuerNameMismatch,
+    IssuerNameMismatch = 5,
 
     /// <summary>An authority key identifier differs from the subject key identifier of the next certificate.</summary>
-    KeyIdentifierMismatch,
+    KeyIdentifierMismatch = 6,
 
     /// <summary>The next certificate key did not sign a certificate.</summary>
-    HopSignature,
+    HopSignature = 7,
 
     /// <summary>An issuing or leaf key is not an FDO key type.</summary>
-    UnsupportedKey,
+    UnsupportedKey = 8,
 
     /// <summary>A certificate is not valid at the verification time.</summary>
-    Validity,
+    Validity = 9,
 
     /// <summary>Two certificates share a subject name.</summary>
-    DuplicateSubject,
+    DuplicateSubject = 10,
 
     /// <summary>A certificate violates its basic constraints or path length.</summary>
-    CaConstraints,
+    CaConstraints = 11,
 
     /// <summary>A certificate key usage does not permit its role.</summary>
-    KeyUsage,
+    KeyUsage = 12,
 
     /// <summary>A certificate carries a path-affecting feature that this verifier does not process, such as NOM.</summary>
-    UnsupportedPathFeature,
+    UnsupportedPathFeature = 13,
 
     /// <summary>A certificate carries a critical extension this verifier does not recognize.</summary>
-    UnknownCriticalExtension,
+    UnknownCriticalExtension = 14,
 }
 
 /// <summary>Thrown when a Delegate chain is not authentic for the Owner key.</summary>
@@ -229,6 +228,9 @@ internal sealed class FdoDelegateChainVerifier
     private readonly int _maxCertificateBytes;
     private readonly int _maxTotalBytes;
 
+    /// <summary>
+    /// Creates a verifier with the default certificate and chain size limits.
+    /// </summary>
     /// <param name="revocationMode">Must be <see cref="X509RevocationMode.NoCheck"/>.</param>
     /// <exception cref="NotSupportedException">Offline or online revocation checking was requested.</exception>
     public FdoDelegateChainVerifier(X509RevocationMode revocationMode)
@@ -336,7 +338,7 @@ internal sealed class FdoDelegateChainVerifier
             X509Certificate2? issuer = i + 1 == targets.Length ? null : certificates[i + 1].Certificate;
             targets[i] = new FdoDelegateRevocationTarget(
                 certificates[i].Certificate.RawData, issuer is null ? ownerKey : EncodeKey(issuer),
-                issuer is null ? (ReadOnlyMemory<byte>?)null : issuer.RawData);
+                issuer is null ? (ReadOnlyMemory<byte>?)null : new ReadOnlyMemory<byte>(issuer.RawData));
         }
 
         return Array.AsReadOnly(targets);

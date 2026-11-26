@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -149,8 +151,8 @@ public sealed class FdoHttpServerSession : IDisposable
 
         if (pathPrefix.Length > 1024 ||
             (pathPrefix.Length != 0 &&
-             (!pathPrefix.StartsWith("/", StringComparison.Ordinal) ||
-              pathPrefix.EndsWith("/", StringComparison.Ordinal) ||
+             (!pathPrefix.StartsWith('/') ||
+              pathPrefix.EndsWith('/') ||
               pathPrefix.Contains("//", StringComparison.Ordinal) ||
               pathPrefix.IndexOfAny(['?', '#', '\\', '\r', '\n']) >= 0)))
         {

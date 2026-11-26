@@ -1284,8 +1284,10 @@ or other recovery protocol absent from the specification.
 The package is not to be published and the repository is not to become public
 until the library is fully implemented and reviewed. Creating package metadata
 in this scaffold does not authorize a package push or repository-visibility
-change. Any later interoperability or conformance statement must be supported
-by role-specific protocol, cryptographic, transport, and interoperability
+change. The project is licensed under the [MIT License](../LICENSE). Check the
+redistribution notices for any third-party material shipped with the release.
+Any later interoperability or conformance statement must be supported by
+role-specific protocol, cryptographic, transport, and interoperability
 validation.
 
 ## Sources

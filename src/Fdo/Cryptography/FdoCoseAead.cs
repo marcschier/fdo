@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -6,12 +8,16 @@ namespace Fdo.Cryptography;
 
 internal enum FdoCoseAeadAlgorithm
 {
-    A128Gcm = 1,
-    A256Gcm = 3,
-    AesCcm16_128_128 = 30,
-    AesCcm16_128_256 = 31,
-    AesCcm64_128_128 = 32,
-    AesCcm64_128_256 = 33,
+    /// <summary>
+    /// FDO <c>CS_AES256_CTR_HMAC-SHA384</c> encrypt-then-MAC suite. It is not a
+    /// COSE AEAD algorithm; <see cref="FdoCoseAead"/> rejects it.
+    /// </summary>
+    AesCtr256HmacSha384 = -17760706,
+
+    /// <summary>
+    /// FDO <c>CS_AES256_CBC_HMAC-SHA384</c> encrypt-then-MAC suite.
+    /// </summary>
+    AesCbc256HmacSha384 = -17760705,
 
     /// <summary>
     /// FDO <c>CS_AES128_CTR_HMAC-SHA256</c> encrypt-then-MAC suite. It is not a
@@ -23,17 +29,12 @@ internal enum FdoCoseAeadAlgorithm
     /// FDO <c>CS_AES128_CBC_HMAC-SHA256</c> encrypt-then-MAC suite.
     /// </summary>
     AesCbc128HmacSha256 = -17760703,
-
-    /// <summary>
-    /// FDO <c>CS_AES256_CTR_HMAC-SHA384</c> encrypt-then-MAC suite. It is not a
-    /// COSE AEAD algorithm; <see cref="FdoCoseAead"/> rejects it.
-    /// </summary>
-    AesCtr256HmacSha384 = -17760706,
-
-    /// <summary>
-    /// FDO <c>CS_AES256_CBC_HMAC-SHA384</c> encrypt-then-MAC suite.
-    /// </summary>
-    AesCbc256HmacSha384 = -17760705,
+    A128Gcm = 1,
+    A256Gcm = 3,
+    AesCcm16_128_128 = 30,
+    AesCcm16_128_256 = 31,
+    AesCcm64_128_128 = 32,
+    AesCcm64_128_256 = 33,
 }
 
 /// <summary>

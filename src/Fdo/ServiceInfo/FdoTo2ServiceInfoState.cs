@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Security.Cryptography;
@@ -193,9 +195,9 @@ internal sealed class FdoTo2ServiceInfoState
 
     private enum Turn
     {
-        Device,
-        Owner,
-        Done,
-        Failed,
+        Device = 0,
+        Owner = 1,
+        Done = 2,
+        Failed = 3,
     }
 }

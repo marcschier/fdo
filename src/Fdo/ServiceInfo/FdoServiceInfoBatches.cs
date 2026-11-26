@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -27,8 +29,10 @@ internal static class FdoServiceInfoBatches
     /// </summary>
     public const int MaxAssembledBytes = ushort.MaxValue;
 
-    // A TO2 ServiceInfo plaintext wraps the ServiceInfo array in a three-field
-    // array whose header and two leading one-byte fields add three bytes.
+    /// <summary>
+    /// A TO2 ServiceInfo plaintext wraps the ServiceInfo array in a three-field
+    /// array whose header and two leading one-byte fields add three bytes.
+    /// </summary>
     private const int MessageOverhead = 3;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
@@ -125,6 +129,10 @@ internal static class FdoServiceInfoBatches
 
         public int Count => _entries.Count;
 
+        /// <summary>
+        /// Appends a complete round without exceeding the transfer limits.
+        /// </summary>
+        /// <param name="entries">The entries received in this round.</param>
         /// <exception cref="CborContentException">The limits would be exceeded.</exception>
         public void Append(IReadOnlyList<Entry> entries)
         {

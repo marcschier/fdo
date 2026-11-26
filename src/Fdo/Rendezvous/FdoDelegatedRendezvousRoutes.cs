@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -40,7 +42,7 @@ internal static class FdoDelegatedRendezvousRoutes
 
     public static bool MatchesOrigin(FdoRendezvousAddress address, Uri? uri)
     {
-        if (uri is null || !uri.IsAbsoluteUri || uri.Port != address.Port ||
+        if (uri?.IsAbsoluteUri != true || uri.Port != address.Port ||
             uri.Scheme != (address.Protocol == FdoRendezvousTransportProtocol.Https ? Uri.UriSchemeHttps : Uri.UriSchemeHttp))
         {
             return false;

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -941,14 +943,14 @@ public sealed class FdoPairedRendezvousTests
         IReadOnlyList<string>? authorization = null,
         string method = "POST",
         IReadOnlyList<string>? contentTypes = null) => new()
-    {
-        Method = method,
-        Target = target,
-        AuthorizationValues = authorization ?? [],
-        ContentTypeValues = contentTypes ?? ["application/cbor"],
-        ContentLength = body.Length,
-        Body = new MemoryStream(body.ToArray(), writable: false),
-    };
+        {
+            Method = method,
+            Target = target,
+            AuthorizationValues = authorization ?? [],
+            ContentTypeValues = contentTypes ?? ["application/cbor"],
+            ContentLength = body.Length,
+            Body = new MemoryStream(body.ToArray(), writable: false),
+        };
 
     private static async Task<TException> CatchAsync<TException>(Func<Task> action)
         where TException : Exception

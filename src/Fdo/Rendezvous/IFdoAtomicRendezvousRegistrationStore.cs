@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -30,6 +32,7 @@ public interface IFdoAtomicRendezvousRegistrationStore
 
     /// <summary>Conditionally writes one record and its mutation receipt.</summary>
     /// <remarks>
+    /// <para>
     /// In one transaction check the receipt, expected revision, expiry,
     /// replacement authorization and storage limits, then write the record,
     /// the new revision (the incoming registration ID), and the receipt.
@@ -39,13 +42,15 @@ public interface IFdoAtomicRendezvousRegistrationStore
     /// mutation authorizes replacing that exact registration ID. After
     /// expiry a slot is vacant, but the revision still fences stale writers.
     /// A mutation with an expired incoming record must not commit.
-    ///
+    /// </para>
+    /// <para>
     /// Return <see cref="FdoRendezvousMutationResult.Applied"/> only after the
     /// commit is durable or if a durable receipt already matches the exact
     /// mutation. Compare every input, including original encoded bytes,
     /// normalized address, identity, expiry, authorization and expected
     /// revision; reusing the ID with different inputs is a conflict. An
     /// exception or cancellation does not prove that the mutation rolled back.
+    /// </para>
     /// </remarks>
     ValueTask<FdoRendezvousMutationResult> TryWriteAsync(
         FdoRendezvousRegistrationMutation mutation, CancellationToken cancellationToken);
@@ -207,20 +212,20 @@ public sealed class FdoRendezvousRegistrationSnapshot
 public enum FdoRendezvousMutationResult
 {
     /// <summary>No mutation was applied because the expected revision was stale.</summary>
-    RevisionConflict,
+    RevisionConflict = 0,
 
     /// <summary>The exact mutation committed durably.</summary>
-    Applied,
+    Applied = 1,
 
     /// <summary>The write was denied because it would replace a live record without authorization.</summary>
-    ReplacementNotAuthorized,
+    ReplacementNotAuthorized = 2,
 
     /// <summary>The incoming record expired before the write.</summary>
-    Expired,
+    Expired = 3,
 
     /// <summary>Host storage limits prevented the write.</summary>
-    CapacityExceeded,
+    CapacityExceeded = 4,
 
     /// <summary>The registration ID already identifies a different committed mutation.</summary>
-    MutationIdConflict,
+    MutationIdConflict = 5,
 }

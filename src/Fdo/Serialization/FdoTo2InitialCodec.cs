@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -42,7 +44,7 @@ internal sealed class FdoTo2InitialCodec
         byte[] guid = CopyIdentifier(message.Guid, nameof(message));
         byte[] sugar = CopyIdentifier(message.Sugar, nameof(message));
         long[] hashes = CopyNumbers(message.HashTypes, "hash types", out long hashBytes);
-        long size = 2L * (1 + IdentifierLength) + IntegerSize(message.MaxDeviceMessageSize) +
+        long size = (2L * (1 + IdentifierLength)) + IntegerSize(message.MaxDeviceMessageSize) +
             FdoCborCodec.GetHeaderSize((ulong)hashes.Length) + hashBytes;
         int additionalItems = CheckAdditionalItems(4L + hashes.Length);
         FdoCapabilityFields.Prepared fields = FdoCapabilityFields.Prepare(
@@ -69,7 +71,7 @@ internal sealed class FdoTo2InitialCodec
         string[] exchanges = CopyNames(message.KeyExchangeSuites, out long exchangeBytes);
         long[] ciphers = CopyNumbers(message.CipherSuites, "cipher suites", out long cipherBytes);
         ReadOnlyMemory<byte> hashPrev = message.HashPrev.Encode();
-        long size = 2L * (1 + IdentifierLength) + IntegerSize(message.MaxOwnerMessageSize) +
+        long size = (2L * (1 + IdentifierLength)) + IntegerSize(message.MaxOwnerMessageSize) +
             FdoCborCodec.GetHeaderSize((ulong)exchanges.Length) + exchangeBytes +
             FdoCborCodec.GetHeaderSize((ulong)ciphers.Length) + cipherBytes + hashPrev.Length;
         int additionalItems = CheckAdditionalItems(8L + exchanges.Length + ciphers.Length);

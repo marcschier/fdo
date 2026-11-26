@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -6,8 +8,8 @@ namespace Fdo.Cryptography;
 
 internal enum FdoDhGroup
 {
-    DhkexId14,
-    DhkexId15,
+    DhkexId14 = 0,
+    DhkexId15 = 1,
 }
 
 /// <summary>

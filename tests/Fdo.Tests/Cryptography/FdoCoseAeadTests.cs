@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -10,8 +12,18 @@ namespace Fdo.Tests.Cryptography;
 [UnsupportedOSPlatform("browser")]
 public sealed class FdoCoseAeadTests
 {
-    // NIST CAVP GCM EncryptExtIV, key sizes 128/256, IV 96, PT/AAD/tag 128, count 0.
-    // NIST ACVP AES-CCM internalProjection groups 2, 70, 206, and 220.
+    /// <summary>
+    /// NIST CAVP GCM EncryptExtIV, key sizes 128/256, IV 96, PT/AAD/tag 128, count 0.
+    /// NIST ACVP AES-CCM internalProjection groups 2, 70, 206, and 220.
+    /// </summary>
+    /// <param name="algorithm"></param>
+    /// <param name="keyHex"></param>
+    /// <param name="nonceHex"></param>
+    /// <param name="plaintextHex"></param>
+    /// <param name="aadHex"></param>
+    /// <param name="ciphertextHex"></param>
+    /// <param name="tagHex"></param>
+    /// <returns></returns>
     [Test]
     [Arguments(1,
         "C939CC13397C1D37DE6AE0E1CB7C423C",

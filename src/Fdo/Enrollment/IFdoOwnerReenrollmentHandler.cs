@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,10 +38,10 @@ public interface IFdoOwnerReenrollmentHandler
 public enum FdoReenrollmentKind
 {
     /// <summary>The SubjectPublicKeyInfo values match.</summary>
-    Renewal,
+    Renewal = 0,
 
     /// <summary>The SubjectPublicKeyInfo values differ.</summary>
-    Rekey,
+    Rekey = 1,
 }
 
 /// <summary>Detached evidence checked against the host-selected prior certificate.</summary>

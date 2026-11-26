@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -425,13 +427,13 @@ internal sealed class FdoCborCodec
 
     private enum ScalarMapKeyKind
     {
-        Unsigned,
-        Negative,
-        ByteString,
-        TextString,
-        Simple,
-        Float,
-        NaN,
+        Unsigned = 0,
+        Negative = 1,
+        ByteString = 2,
+        TextString = 3,
+        Simple = 4,
+        Float = 5,
+        NaN = 6,
     }
 
     private readonly record struct ScalarMapKey(ScalarMapKeyKind Kind, ulong Value, ReadOnlyMemory<byte> Bytes);
@@ -443,12 +445,12 @@ internal sealed class FdoCborCodec
         public bool Equals(ScalarMapKey x, ScalarMapKey y) =>
             x.Kind == y.Kind && x.Value == y.Value && x.Bytes.Span.SequenceEqual(y.Bytes.Span);
 
-        public int GetHashCode(ScalarMapKey key)
+        public int GetHashCode(ScalarMapKey obj)
         {
             var hash = new HashCode();
-            hash.Add(key.Kind);
-            hash.Add(key.Value);
-            hash.AddBytes(key.Bytes.Span);
+            hash.Add(obj.Kind);
+            hash.Add(obj.Value);
+            hash.AddBytes(obj.Bytes.Span);
             return hash.ToHashCode();
         }
     }

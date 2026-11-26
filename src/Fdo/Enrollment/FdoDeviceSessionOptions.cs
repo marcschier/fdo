@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Security.Cryptography;
 using Fdo.Cryptography;
@@ -10,10 +12,10 @@ namespace Fdo.Enrollment;
 public enum FdoDeviceHmacAlgorithm
 {
     /// <summary>HMAC-SHA-256 with a 32-byte Device secret.</summary>
-    HmacSha256,
+    HmacSha256 = 0,
 
     /// <summary>HMAC-SHA-384 with a 64-byte Device secret.</summary>
-    HmacSha384,
+    HmacSha384 = 1,
 }
 
 /// <summary>Device metadata advertised by the paired devmod inventory.</summary>

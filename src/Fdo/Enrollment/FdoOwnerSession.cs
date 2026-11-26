@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -983,17 +985,17 @@ public sealed class FdoOwnerSession : IDisposable
 
     private enum Phase
     {
-        Probe,
-        DeviceProof,
-        Entries,
-        Ready,
-        Inventory,
-        Enrollment,
-        EnrollmentAfterCa,
-        EnrollmentAfterAttributes,
-        Done,
-        Complete,
-        Failed,
-        Disposed,
+        Probe = 0,
+        DeviceProof = 1,
+        Entries = 2,
+        Ready = 3,
+        Inventory = 4,
+        Enrollment = 5,
+        EnrollmentAfterCa = 6,
+        EnrollmentAfterAttributes = 7,
+        Done = 8,
+        Complete = 9,
+        Failed = 10,
+        Disposed = 11,
     }
 }

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -461,8 +463,7 @@ public sealed class FdoTo2PairedCbcEtmChannelTests
         var suite = (FdoCoseAeadAlgorithm)suiteValue;
         (byte[] svk, byte[] sek) = FdoCoseEncryptThenMacCodecTests.Keys(svkLength, sekLength);
         byte[] sessionKey = SessionKey(svk, sek);
-        byte[][] malformed = [Array.Empty<byte>(), [0x00, 0x01]];
-        foreach (byte[] plaintext in malformed)
+        foreach (byte[] plaintext in (byte[][])[Array.Empty<byte>(), [0x00, 0x01]])
         {
             using var channel = new FdoTo2PairedCbcEtmChannel(FdoTo2PairedRole.Device, suite, sessionKey);
             var keys = await CaptureKeysAsync(channel, svk, sek);
@@ -497,8 +498,7 @@ public sealed class FdoTo2PairedCbcEtmChannelTests
         byte[] sessionKey = SessionKey(svk, sek);
         byte[] valid = EnvelopeForPlaintext(
             suiteValue, macType, svk, sek, FixedIv, FdoCoseEncryptThenMacCodecTests.Plaintext(1));
-        byte[][] malformed = [Array.Empty<byte>(), [0x00], [.. valid, 0x00]];
-        foreach (byte[] encoded in malformed)
+        foreach (byte[] encoded in (byte[][])[Array.Empty<byte>(), [0x00], [.. valid, 0x00]])
         {
             Exception failure = await OpenFailureAsync<CborContentException>(suite, sessionKey, svk, sek, encoded);
             await Assert.That(failure.GetType() == typeof(CborContentException)).IsTrue();

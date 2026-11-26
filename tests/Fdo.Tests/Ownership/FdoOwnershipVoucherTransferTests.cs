@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -10,7 +12,6 @@ using Fdo.Initialization;
 using Fdo.Ownership;
 using Fdo.Serialization;
 using Fdo.Tests.Cryptography;
-using TUnit.Core;
 
 namespace Fdo.Tests.Ownership;
 

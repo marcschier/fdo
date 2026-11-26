@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 
@@ -7,57 +9,57 @@ namespace Fdo.Rendezvous;
 public enum FdoRendezvousPlanStepKind
 {
     /// <summary>Authorize and, if permitted, try the attempt's candidate now.</summary>
-    Attempt,
+    Attempt = 0,
 
     /// <summary>Call <see cref="FdoRendezvousAttemptPlan.Next"/> again at or after the step's not-before time.</summary>
-    Wait,
+    Wait = 1,
 
     /// <summary>An uncertain attempt must be resolved through <see cref="FdoRendezvousAttemptPlan.Reconcile"/>.</summary>
-    ReconciliationRequired,
+    ReconciliationRequired = 2,
 
     /// <summary>An attempt succeeded. The plan is finished.</summary>
-    Succeeded,
+    Succeeded = 3,
 
     /// <summary>The host stopped the plan. The plan is finished.</summary>
-    Stopped,
+    Stopped = 4,
 
     /// <summary>A bound was reached before an attempt succeeded. The plan is finished.</summary>
-    Exhausted,
+    Exhausted = 5,
 }
 
 /// <summary>Identifies the bound that finished an exhausted plan.</summary>
 public enum FdoRendezvousExhaustion
 {
     /// <summary>The plan is not exhausted.</summary>
-    None,
+    None = 0,
 
     /// <summary>No directive applies to the plan's role.</summary>
-    NoApplicableDirective,
+    NoApplicableDirective = 1,
 
     /// <summary>Every permitted attempt was offered.</summary>
-    AttemptBudget,
+    AttemptBudget = 2,
 
     /// <summary>The next attempt could not start before the deadline.</summary>
-    Deadline,
+    Deadline = 3,
 }
 
 /// <summary>The host's report of one offered attempt.</summary>
 public enum FdoRendezvousAttemptResult
 {
     /// <summary>The role run completed. The plan finishes as succeeded.</summary>
-    Succeeded,
+    Succeeded = 0,
 
     /// <summary>Host policy refused the destination; nothing was sent.</summary>
-    Declined,
+    Declined = 1,
 
     /// <summary>The run failed and the peer is known not to hold new state from it.</summary>
-    Failed,
+    Failed = 2,
 
     /// <summary>The run ended without establishing whether the peer processed it.</summary>
-    Uncertain,
+    Uncertain = 3,
 
     /// <summary>The host ends the plan without a further attempt.</summary>
-    Stop,
+    Stop = 4,
 }
 
 /// <summary>Bounds for one <see cref="FdoRendezvousAttemptPlan"/>.</summary>

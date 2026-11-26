@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Buffers.Binary;
 using System.Runtime.Versioning;
@@ -7,8 +9,8 @@ namespace Fdo.Cryptography;
 
 internal enum FdoEcdhParty
 {
-    Device,
-    Owner,
+    Device = 0,
+    Owner = 1,
 }
 
 /// <summary>

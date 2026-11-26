@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -112,8 +114,7 @@ internal sealed class FdoTo2DeviceProofCodec
         ProofFields? fields = null;
         for (int i = 0; i < 3; i++)
         {
-            long claim = ReadInteger(reader);
-            switch (claim)
+            switch (ReadInteger(reader))
             {
                 case EatNonce:
                     nonce = ReadBytes(reader, NonceLength);

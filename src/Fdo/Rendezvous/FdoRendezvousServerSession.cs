@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -31,7 +33,6 @@ public sealed class FdoRendezvousServerSession : IDisposable
     private readonly IFdoRendezvousRegistrationAdmission? _admission;
     private readonly FdoDelegateOfflineRevocationPolicy? _delegateOfflineRevocation;
     private readonly TimeProvider _clock;
-    private readonly FdoRendezvousProtocol _protocol;
     private readonly uint _maxWaitSeconds;
     private readonly int _maxVoucherEntries;
     private readonly ushort _maxMessageSize;
@@ -94,7 +95,7 @@ public sealed class FdoRendezvousServerSession : IDisposable
         _admission = options.RegistrationAdmission;
         _delegateOfflineRevocation = options.DelegateOfflineRevocation;
         _clock = options.TimeProvider;
-        _protocol = protocol;
+        Protocol = protocol;
         _maxWaitSeconds = options.MaxWaitSeconds;
         _maxVoucherEntries = options.MaxVoucherEntries;
         _maxMessageSize = options.MaxMessageSize;
@@ -105,7 +106,7 @@ public sealed class FdoRendezvousServerSession : IDisposable
     public Guid RunId { get; }
 
     /// <summary>The rendezvous protocol accepted by this session.</summary>
-    public FdoRendezvousProtocol Protocol => _protocol;
+    public FdoRendezvousProtocol Protocol { get; }
 
     /// <summary>Whether the registration store callback started.</summary>
     public bool RegistrationWriteStarted { get; private set; }
@@ -167,7 +168,7 @@ public sealed class FdoRendezvousServerSession : IDisposable
                 ? await ProcessRvMoreAsync(body, cancellationToken).ConfigureAwait(false)
                 : _phase == Phase.Hello
                 ? await ProcessHelloAsync(body, cancellationToken).ConfigureAwait(false)
-                : _protocol == FdoRendezvousProtocol.OwnerRegistration
+                : Protocol == FdoRendezvousProtocol.OwnerRegistration
                     ? await ProcessOwnerSignAsync(body, observedSource, cancellationToken).ConfigureAwait(false)
                     : await ProcessDeviceProofAsync(body, cancellationToken).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
@@ -239,11 +240,11 @@ public sealed class FdoRendezvousServerSession : IDisposable
         ReadOnlyMemory<byte> body,
         CancellationToken cancellationToken)
     {
-        ushort request = _protocol == FdoRendezvousProtocol.OwnerRegistration
+        ushort request = Protocol == FdoRendezvousProtocol.OwnerRegistration
             ? FdoMessageTypes.TO0Hello : FdoMessageTypes.TO1HelloRV;
         FdoInitialMessageCodec.InitialMessage hello = _codec.ReadHello(request, body, _atomicStore is not null);
         _delegated = (hello.AdvertisedCapabilities & FdoKnownCapabilities.Delegation) != 0;
-        if (_protocol == FdoRendezvousProtocol.DeviceLookup)
+        if (Protocol == FdoRendezvousProtocol.DeviceLookup)
         {
             ReadOnlyMemory<byte> guid = hello.GuidOrNonce!.Value;
             if (_allowMultipleRedirects && _delegated)
@@ -261,7 +262,7 @@ public sealed class FdoRendezvousServerSession : IDisposable
 
         cancellationToken.ThrowIfCancellationRequested();
         _nonce = RandomNumberGenerator.GetBytes(16);
-        bool owner = _protocol == FdoRendezvousProtocol.OwnerRegistration;
+        bool owner = Protocol == FdoRendezvousProtocol.OwnerRegistration;
         FdoRendezvousMessageType response = owner
             ? FdoRendezvousMessageType.OwnerHelloAck : FdoRendezvousMessageType.DeviceHelloAck;
         ushort responseType = owner ? FdoMessageTypes.TO0HelloAck : FdoMessageTypes.TO1HelloRVAck;
@@ -620,7 +621,7 @@ public sealed class FdoRendezvousServerSession : IDisposable
         RequireBodySize(_codec.EncodeRedirect(registration.SignedRedirect));
     }
 
-    private FdoRendezvousMessageType ExpectedRequest() => (_protocol, _phase) switch
+    private FdoRendezvousMessageType ExpectedRequest() => (Protocol, _phase) switch
     {
         (FdoRendezvousProtocol.OwnerRegistration, Phase.Hello) => FdoRendezvousMessageType.OwnerHello,
         (FdoRendezvousProtocol.OwnerRegistration, Phase.Proof) => FdoRendezvousMessageType.OwnerSign,
@@ -657,11 +658,11 @@ public sealed class FdoRendezvousServerSession : IDisposable
 
     private enum Phase
     {
-        Hello,
-        Proof,
-        Pages,
-        Complete,
-        Failed,
-        Disposed,
+        Hello = 0,
+        Proof = 1,
+        Pages = 2,
+        Complete = 3,
+        Failed = 4,
+        Disposed = 5,
     }
 }

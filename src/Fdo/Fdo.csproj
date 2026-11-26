@@ -5,22 +5,33 @@
     <AssemblyName>Fdo</AssemblyName>
     <PackageId>Fdo</PackageId>
     <Description>Standalone FIDO Device Onboard 2.0 library for .NET.</Description>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Authors>marcschier</Authors>
+    <Copyright>Copyright (c) 2026 marcschier</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/marcschier/fdo</PackageProjectUrl>
     <RepositoryUrl>https://github.com/marcschier/fdo</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IsPackable>true</IsPackable>
+    <EnablePackageValidation>true</EnablePackageValidation>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IsAotCompatible>true</IsAotCompatible>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(FdoStrongNameKey)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Remove="PackageReadme.md" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Formats.Cbor" Version="10.0.15" />
-    <InternalsVisibleTo Include="Fdo.Tests" />
+    <PackageReference Include="System.Formats.Cbor" />
+    <InternalsVisibleTo Include="Fdo.Tests" Key="$(FdoPublicKey)" />
   </ItemGroup>
 </Project>

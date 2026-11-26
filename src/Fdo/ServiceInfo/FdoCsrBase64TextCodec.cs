@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -26,6 +28,9 @@ internal sealed class FdoCsrBase64TextCodec
     private const string AttributesResponseKey = "fdo.csr:csrattrs-res";
     private readonly int _maxPlaintextBytes;
 
+    /// <summary>
+    /// Creates a codec bounded by the negotiated TO2 plaintext limit.
+    /// </summary>
     /// <param name="maxPlaintextBytes">
     /// Maximum encoded TO2 plaintext body size available to one ServiceInfo item.
     /// </param>

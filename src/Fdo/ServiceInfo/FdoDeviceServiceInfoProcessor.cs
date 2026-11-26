@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -181,10 +183,7 @@ internal sealed class FdoDeviceServiceInfoProcessor
             throw new CborContentException("Device ServiceInfo responses exceed the configured limit.");
         }
 
-        foreach (Entry entry in snapshot)
-        {
-            destination.Add(entry);
-        }
+        destination.AddRange(snapshot);
 
         encodedEntriesSize = entriesSize;
     }
@@ -213,9 +212,9 @@ internal sealed class FdoDeviceServiceInfoProcessor
 
     private enum ModuleState
     {
-        Inactive,
-        Active,
-        Disabled,
+        Inactive = 0,
+        Active = 1,
+        Disabled = 2,
     }
 
     private sealed class Module(IFdoDeviceServiceInfoModule implementation)

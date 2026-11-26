@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Formats.Cbor;
@@ -6,7 +8,6 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Fdo.Cryptography;
 using Fdo.Serialization;
-using Fdo.Transport;
 
 namespace Fdo.Rendezvous;
 
@@ -427,10 +428,7 @@ internal sealed class FdoRendezvousCodec
 
     public ReadOnlyMemory<byte> EncodeAcceptOwner(uint waitSeconds)
     {
-        if (waitSeconds == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(waitSeconds));
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(waitSeconds);
 
         var writer = new CborWriter(CborConformanceMode.Canonical);
         writer.WriteStartArray(1);

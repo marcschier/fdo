@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -6,14 +8,14 @@ namespace Fdo.Cryptography;
 
 internal enum FdoAsymSuite
 {
-    Asym2048,
-    Asym3072,
+    Asym2048 = 0,
+    Asym3072 = 1,
 }
 
 internal enum FdoAsymParty
 {
-    Device,
-    Owner,
+    Device = 0,
+    Owner = 1,
 }
 
 /// <summary>

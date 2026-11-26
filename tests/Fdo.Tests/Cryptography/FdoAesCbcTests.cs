@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -13,7 +15,12 @@ public sealed class FdoAesCbcTests
     private const string Key256 = "603DEB1015CA71BE2B73AEF0857D77811F352C073B6108D72D9810A30914DFF4";
     private static readonly byte[] Iv = Convert.FromHexString("000102030405060708090A0B0C0D0E0F");
 
-    // NIST SP 800-38A F.2.1 and F.2.5 supply the first two blocks.
+    /// <summary>
+    /// NIST SP 800-38A F.2.1 and F.2.5 supply the first two blocks.
+    /// </summary>
+    /// <param name="keyHex"></param>
+    /// <param name="ciphertextHex"></param>
+    /// <returns></returns>
     [Test]
     [Arguments(Key128, "7649ABAC8119B246CEE98E9B12E9197D5086CB9B507219EE95DB113A917678B2")]
     [Arguments(Key256, "F58C4C04D6E5F1BA779EABFB5F7BFBD69CFC4E967EDB808D679F777BC6702C7D")]
@@ -61,7 +68,7 @@ public sealed class FdoAesCbcTests
             byte[] plaintext = new byte[item.PlaintextLength];
             for (int i = 0; i < plaintext.Length; i++)
             {
-                plaintext[i] = (byte)(0x21 + i * 7);
+                plaintext[i] = (byte)(0x21 + (i * 7));
             }
 
             await Assert.That(FdoAesCbc.GetCiphertextLength(plaintext.Length)).IsEqualTo(item.CiphertextLength);
@@ -71,7 +78,7 @@ public sealed class FdoAesCbcTests
 
             byte[] expectedPadded = new byte[item.CiphertextLength];
             plaintext.CopyTo(expectedPadded, 0);
-            byte padding = (byte)(16 - plaintext.Length % 16);
+            byte padding = (byte)(16 - (plaintext.Length % 16));
             Array.Fill(expectedPadded, padding, plaintext.Length, expectedPadded.Length - plaintext.Length);
             byte[] actualPadded = DecryptWithoutPadding(key, Iv, ciphertext);
             await Assert.That(actualPadded.AsSpan().SequenceEqual(expectedPadded)).IsTrue();

@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -4492,11 +4494,11 @@ public sealed class FdoPairedTo2SessionTests
 
     public enum ForgedProof
     {
-        RedirectOnly,
-        ReuseWithDisable,
-        ForeignOwner,
-        WrongSigner,
-        TamperedEntry,
+        RedirectOnly = 0,
+        ReuseWithDisable = 1,
+        ForeignOwner = 2,
+        WrongSigner = 3,
+        TamperedEntry = 4,
     }
 
     [Test]
@@ -4538,7 +4540,8 @@ public sealed class FdoPairedTo2SessionTests
                 byte[] body = message.Body.ToArray();
                 body[^1] ^= 0x01;
                 return message with { Body = body };
-            },
+            }
+            ,
         };
 
         Exception failure = await CatchAsync<Exception>(fixture.RunAsync);
@@ -4898,13 +4901,13 @@ public sealed class FdoPairedTo2SessionTests
 
     public enum RedirectFailure
     {
-        ForeignAnchor,
-        WrongSigner,
-        Tampered,
-        MissingRedirect,
-        ExpiredAtRedirectTime,
-        HostDenied,
-        Canceled,
+        ForeignAnchor = 0,
+        WrongSigner = 1,
+        Tampered = 2,
+        MissingRedirect = 3,
+        ExpiredAtRedirectTime = 4,
+        HostDenied = 5,
+        Canceled = 6,
     }
 
     [Test]
@@ -5477,7 +5480,6 @@ public sealed class FdoPairedTo2SessionTests
 
     private sealed class Fixture : IDisposable, IFdoDeviceEnrollmentHandler, IFdoDeviceServerKeygenHandler
     {
-        private readonly ECDsa _enrollmentKey;
         private readonly X509Certificate2 _issuedCertificate;
         private byte[]? _caCrl;
 
@@ -5487,10 +5489,10 @@ public sealed class FdoPairedTo2SessionTests
             FdoCoseAeadAlgorithm cipher = FdoCoseAeadAlgorithm.A128Gcm)
         {
             Auth = new AuthenticationFixture(curveSize, exchange, cipher);
-            _enrollmentKey = ECDsa.Create(
+            EnrollmentKey = ECDsa.Create(
                 curveSize == 256 ? ECCurve.NamedCurves.nistP256 : ECCurve.NamedCurves.nistP384);
             var request = new CertificateRequest(
-                "CN=FDO enrollment", _enrollmentKey,
+                "CN=FDO enrollment", EnrollmentKey,
                 curveSize == 256 ? HashAlgorithmName.SHA256 : HashAlgorithmName.SHA384);
             Request = request.CreateSigningRequest();
             _issuedCertificate = request.Create(
@@ -5514,7 +5516,7 @@ public sealed class FdoPairedTo2SessionTests
         public AuthenticationFixture Auth { get; }
         public byte[] Request { get; set; }
         public byte[] Certificate { get; }
-        public ECDsa EnrollmentKey => _enrollmentKey;
+        public ECDsa EnrollmentKey { get; }
         public List<string> Events { get; } = [];
         public RecordingHandler Handler { get; }
         public RecordingCaHandler CaHandler { get; }
@@ -5837,7 +5839,7 @@ public sealed class FdoPairedTo2SessionTests
             DeviceSession?.Dispose();
             Session?.Dispose();
             _issuedCertificate.Dispose();
-            _enrollmentKey.Dispose();
+            EnrollmentKey.Dispose();
             Auth.Dispose();
         }
     }
@@ -5909,20 +5911,18 @@ public sealed class FdoPairedTo2SessionTests
     {
         private readonly Fixture _fixture;
         private readonly IFdoDeviceInitializeHmacSecret _secret;
-        private readonly FdoManufacturerInitializeSession _manufacturer;
-        private readonly FdoDeviceInitializeSession _device;
         private FdoDeviceInitializeCredential? _stagedCredential;
 
         public InitializationFixture(Fixture fixture, IFdoDeviceInitializeHmacSecret secret)
         {
             _fixture = fixture;
             _secret = secret;
-            _manufacturer = new FdoManufacturerInitializeSession(new FdoManufacturerInitializeOptions
+            Manufacturer = new FdoManufacturerInitializeSession(new FdoManufacturerInitializeOptions
             {
                 Handler = this,
                 UseVoucherHeaderHmac = true,
             });
-            _device = new FdoDeviceInitializeSession(new FdoDeviceInitializeOptions
+            Device = new FdoDeviceInitializeSession(new FdoDeviceInitializeOptions
             {
                 AttestationKey = fixture.Auth.DeviceSigningKey,
                 Handler = this,
@@ -5932,12 +5932,12 @@ public sealed class FdoPairedTo2SessionTests
 
         public FdoManufacturerInitializeVoucher? Voucher { get; private set; }
         public FdoDeviceInitializeCredential? InstalledCredential { get; private set; }
-        public FdoManufacturerInitializeSession Manufacturer => _manufacturer;
-        public FdoDeviceInitializeSession Device => _device;
+        public FdoManufacturerInitializeSession Manufacturer { get; }
+        public FdoDeviceInitializeSession Device { get; }
         public Uri? AuthorizedHttpAddress { get; set; }
         public ReadOnlyMemory<byte>? EncodedRendezvousInfo { get; set; }
 
-        public Task<FdoDeviceInitializeCredential> RunAsync() => _device.RunAsync(this).AsTask();
+        public Task<FdoDeviceInitializeCredential> RunAsync() => Device.RunAsync(this).AsTask();
 
         public ValueTask<IFdoDeviceInitializeHmacSecret> AuthorizeAndReserveAsync(
             Guid runId, IFdoDeviceInitializeTransport transport, CancellationToken cancellationToken)
@@ -5999,13 +5999,13 @@ public sealed class FdoPairedTo2SessionTests
             ReadOnlyMemory<byte> encodedBody,
             CancellationToken cancellationToken)
         {
-            FdoDeviceInitializeResponse response = await _manufacturer.ProcessAsync(
+            FdoDeviceInitializeResponse response = await Manufacturer.ProcessAsync(
                 protocolVersion, messageType, encodedBody, cancellationToken);
-            _manufacturer.ConfirmResponseSent();
+            Manufacturer.ConfirmResponseSent();
             return response;
         }
 
-        public void Dispose() => _manufacturer.Dispose();
+        public void Dispose() => Manufacturer.Dispose();
     }
 
     private sealed class RecordingServerKeygenHandler(Fixture fixture) : IFdoOwnerServerKeygenHandler

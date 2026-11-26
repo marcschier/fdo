@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 
@@ -8,12 +10,12 @@ namespace Fdo.Cryptography;
 /// </summary>
 internal enum FdoSignatureOperation
 {
-    TO0OwnerSign,
-    TO1ProveToRV,
-    TO2ProveDevice,
-    TO2ProveOVHdr,
-    TO2SetupDevice,
-    OVEntry,
+    TO0OwnerSign = 0,
+    TO1ProveToRV = 1,
+    TO2ProveDevice = 2,
+    TO2ProveOVHdr = 3,
+    TO2SetupDevice = 4,
+    OVEntry = 5,
 }
 
 /// <summary>

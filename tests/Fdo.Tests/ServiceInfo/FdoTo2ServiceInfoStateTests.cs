@@ -1,3 +1,5 @@
+// Copyright (c) marcschier. Licensed under the MIT License.
+
 using System;
 using System.Formats.Cbor;
 using System.Runtime.Versioning;
@@ -79,8 +81,7 @@ public sealed class FdoTo2ServiceInfoStateTests
     [Test]
     public async Task RequiresAnEmptyDeviceReplyWhileTheOwnerHasMore()
     {
-        ReadOnlyMemory<byte>[] invalid = [Device(true), Device(false, Data)];
-        foreach (ReadOnlyMemory<byte> reply in invalid)
+        foreach (ReadOnlyMemory<byte> reply in (ReadOnlyMemory<byte>[])[Device(true), Device(false, Data)])
         {
             var state = new FdoTo2ServiceInfoState(Nonce);
             state.RecordDevice(Device(false));
