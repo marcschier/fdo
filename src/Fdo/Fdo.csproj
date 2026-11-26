@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+    <RootNamespace>Fdo</RootNamespace>
+    <AssemblyName>Fdo</AssemblyName>
+    <PackageId>Fdo</PackageId>
+    <Description>Standalone FIDO Device Onboard 2.0 library for .NET.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/marcschier/fdo</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marcschier/fdo</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Formats.Cbor" Version="10.0.15" />
+    <InternalsVisibleTo Include="Fdo.Tests" />
+  </ItemGroup>
+</Project>

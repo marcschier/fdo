@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <PublishAot>true</PublishAot>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Fdo\Fdo.csproj" />
+    <Compile Include="..\Fdo.Tests\Transport\LoopbackHttpServer.cs" Link="LoopbackHttpServer.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Fdo/Fdo.csproj" />
+  <Project Path="tests/Fdo.Tests/Fdo.Tests.csproj" />
+</Solution>
